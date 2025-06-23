@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
@@ -56,5 +57,15 @@ public sealed class TemporaryStreamForwardingTests
         _temporaryStream.CopyTo(targetStream);
 
         _streamMock.CopyToMustHaveBeenCalledWith(targetStream);
+    }
+
+    [Fact]
+    public async Task CopyToAsync_MustForwardToUnderlyingStream()
+    {
+        using var targetStream = new MemoryStream();
+
+        await _temporaryStream.CopyToAsync(targetStream, TestContext.Current.CancellationToken);
+
+        _streamMock.CopyToAsyncMustHaveBeenCalledWith(targetStream);
     }
 }
