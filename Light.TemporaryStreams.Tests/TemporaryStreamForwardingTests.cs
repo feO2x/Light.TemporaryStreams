@@ -87,4 +87,24 @@ public sealed class TemporaryStreamForwardingTests
         _temporaryStream.IsDisposed.Should().BeTrue();
         _streamMock.DisposeAsyncMustHaveBeenCalled();
     }
+
+    [Fact]
+    public void Dispose_MustOnlyForwardOnce_WhenCalledMultipleTimes()
+    {
+        _temporaryStream.Dispose();
+        _temporaryStream.Dispose();
+
+        _temporaryStream.IsDisposed.Should().BeTrue();
+        _streamMock.DisposeMustHaveBeenCalled();
+    }
+
+    [Fact]
+    public async Task DisposeAsync_MustOnlyForwardOnce_WhenCalledMultipleTimes()
+    {
+        await _temporaryStream.DisposeAsync();
+        await _temporaryStream.DisposeAsync();
+
+        _temporaryStream.IsDisposed.Should().BeTrue();
+        _streamMock.DisposeAsyncMustHaveBeenCalled();
+    }
 }
