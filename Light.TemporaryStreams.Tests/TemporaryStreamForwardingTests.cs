@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using FluentAssertions;
 using Xunit;
 
@@ -45,5 +46,15 @@ public sealed class TemporaryStreamForwardingTests
 
         _temporaryStream.IsDisposed.Should().BeTrue();
         _streamMock.CloseMustNotHaveBeenCalled();
+    }
+
+    [Fact]
+    public void CopyTo_MustForwardToUnderlyingStream()
+    {
+        using var targetStream = new MemoryStream();
+
+        _temporaryStream.CopyTo(targetStream);
+
+        _streamMock.CopyToMustHaveBeenCalledWith(targetStream);
     }
 }

@@ -15,6 +15,8 @@ public sealed class StreamMock : Stream
     private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
         _capturedBeginWriteParameters = [];
 
+    private readonly List<Stream> _capturedCopyToParameters = [];
+
     private int _closeCallCount;
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -72,7 +74,7 @@ public sealed class StreamMock : Stream
 
     public void CloseMustNotHaveBeenCalled() => _closeCallCount.Should().Be(0);
 
-    public override void CopyTo(Stream destination, int bufferSize) => base.CopyTo(destination, bufferSize);
+    public override void CopyTo(Stream destination, int bufferSize) => _capturedCopyToParameters.Add(destination);
 
     public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken) =>
         base.CopyToAsync(destination, bufferSize, cancellationToken);
@@ -118,6 +120,11 @@ public sealed class StreamMock : Stream
         base.WriteAsync(buffer, cancellationToken);
 
     public override void WriteByte(byte value) => base.WriteByte(value);
+
+    public void CopyToMustHaveBeenCalledWith(Stream targetStream) =>
+        _capturedCopyToParameters
+           .Should().ContainSingle()
+           .Which.Should().BeSameAs(targetStream);
 }
 
 public sealed class AsyncResultNullObject : IAsyncResult
