@@ -37,4 +37,13 @@ public sealed class TemporaryStreamForwardingTests
         result.Should().BeSameAs(_streamMock.AsyncResult);
         _streamMock.BeginWriteMustHaveBeenCalledWith(array, offset, array.Length, AsyncCallback, state);
     }
+
+    [Fact]
+    public void Close_MustNotForwardToUnderlyingStream()
+    {
+        _temporaryStream.Close();
+
+        _temporaryStream.IsDisposed.Should().BeTrue();
+        _streamMock.CloseMustNotHaveBeenCalled();
+    }
 }
