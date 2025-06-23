@@ -6,7 +6,7 @@ namespace Light.TemporaryStreams.Tests;
 
 public sealed class TemporaryStreamForwardingTests
 {
-    private static readonly AsyncCallback AsyncCallback = asyncResult => { };
+    private static readonly AsyncCallback AsyncCallback = _ => { };
     private readonly StreamMock _streamMock = new ();
     private readonly TemporaryStream _temporaryStream;
 
@@ -23,5 +23,18 @@ public sealed class TemporaryStreamForwardingTests
 
         result.Should().BeSameAs(_streamMock.AsyncResult);
         _streamMock.BeginReadMustHaveBeenCalledWith(array, offset, array.Length, AsyncCallback, state);
+    }
+
+    [Fact]
+    public void BeginWrite_MustForwardToUnderlyingStream()
+    {
+        byte[] array = [];
+        const int offset = 0;
+        var state = new object();
+
+        var result = _temporaryStream.BeginWrite(array, offset, array.Length, AsyncCallback, state);
+
+        result.Should().BeSameAs(_streamMock.AsyncResult);
+        _streamMock.BeginWriteMustHaveBeenCalledWith(array, offset, array.Length, AsyncCallback, state);
     }
 }

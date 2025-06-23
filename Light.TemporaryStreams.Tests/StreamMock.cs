@@ -12,6 +12,9 @@ public sealed class StreamMock : Stream
     private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
         _capturedBeginReadParameters = [];
 
+    private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
+        _capturedBeginWriteParameters = [];
+
     public AsyncResultNullObject AsyncResult { get; } = new ();
     public bool CanSeekReturnValue { get; set; } = true;
     public override bool CanRead { get; }
@@ -46,7 +49,22 @@ public sealed class StreamMock : Stream
         int count,
         AsyncCallback? callback,
         object? state
-    ) => base.BeginWrite(buffer, offset, count, callback, state);
+    )
+    {
+        _capturedBeginWriteParameters.Add((buffer, offset, count, callback, state));
+        return AsyncResult;
+    }
+
+    public void BeginWriteMustHaveBeenCalledWith(
+        byte[] buffer,
+        int offset,
+        int count,
+        AsyncCallback? callback,
+        object? state
+    ) =>
+        _capturedBeginWriteParameters
+           .Should().ContainSingle()
+           .Which.Should().Be((buffer, offset, count, callback, state));
 
     public override void Close() => base.Close();
 
