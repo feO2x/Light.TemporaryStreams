@@ -107,4 +107,20 @@ public sealed class TemporaryStreamForwardingTests
         _temporaryStream.IsDisposed.Should().BeTrue();
         _streamMock.DisposeAsyncMustHaveBeenCalled();
     }
+
+    [Fact]
+    public void Flush_MustForwardToUnderlyingStream()
+    {
+        _temporaryStream.Flush();
+
+        _streamMock.FlushMustHaveBeenCalled();
+    }
+
+    [Fact]
+    public async Task FlushAsync_MustForwardToUnderlyingStream()
+    {
+        await _temporaryStream.FlushAsync(TestContext.Current.CancellationToken);
+
+        _streamMock.FlushAsyncMustHaveBeenCalled();
+    }
 }

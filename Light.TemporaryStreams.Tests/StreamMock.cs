@@ -22,6 +22,8 @@ public sealed class StreamMock : Stream
     private int _closeCallCount;
     private int _disposeAsyncCallCount;
     private int _disposeCallCount;
+    private int _flushCallCount;
+    private int _flushAsyncCallCount;
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
     public bool CanSeekReturnValue { get; set; } = true;
@@ -99,9 +101,13 @@ public sealed class StreamMock : Stream
 
     public override void EndWrite(IAsyncResult asyncResult) => base.EndWrite(asyncResult);
 
-    public override void Flush() => throw new NotImplementedException();
+    public override void Flush() => _flushCallCount++;
 
-    public override Task FlushAsync(CancellationToken cancellationToken) => base.FlushAsync(cancellationToken);
+    public override Task FlushAsync(CancellationToken cancellationToken)
+    {
+        _flushAsyncCallCount++;
+        return Task.CompletedTask;
+    }
 
 
     public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException();
@@ -145,12 +151,8 @@ public sealed class StreamMock : Stream
     public void DisposeMustHaveBeenCalled() => _disposeCallCount.Should().Be(1);
 
     public void DisposeAsyncMustHaveBeenCalled() => _disposeAsyncCallCount.Should().Be(1);
-}
 
-public sealed class AsyncResultNullObject : IAsyncResult
-{
-    public object? AsyncState => null;
-    public WaitHandle AsyncWaitHandle => null!;
-    public bool CompletedSynchronously => true;
-    public bool IsCompleted => true;
+    public void FlushMustHaveBeenCalled() => _flushCallCount.Should().Be(1);
+
+    public void FlushAsyncMustHaveBeenCalled() => _flushAsyncCallCount.Should().Be(1);
 }
