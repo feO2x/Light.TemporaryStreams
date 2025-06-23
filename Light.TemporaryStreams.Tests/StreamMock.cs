@@ -15,10 +15,13 @@ public sealed class StreamMock : Stream
     private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
         _capturedBeginWriteParameters = [];
 
-    private readonly List<Stream> _capturedCopyToParameters = [];
     private readonly List<Stream> _capturedCopyToAsyncParameters = [];
 
+    private readonly List<Stream> _capturedCopyToParameters = [];
+
     private int _closeCallCount;
+    private int _disposeAsyncCallCount;
+    private int _disposeCallCount;
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
     public bool CanSeekReturnValue { get; set; } = true;
@@ -84,9 +87,13 @@ public sealed class StreamMock : Stream
     }
 
 
-    protected override void Dispose(bool disposing) => base.Dispose(disposing);
+    protected override void Dispose(bool disposing) => _disposeCallCount++;
 
-    public override ValueTask DisposeAsync() => base.DisposeAsync();
+    public override ValueTask DisposeAsync()
+    {
+        _disposeAsyncCallCount++;
+        return ValueTask.CompletedTask;
+    }
 
     public override int EndRead(IAsyncResult asyncResult) => base.EndRead(asyncResult);
 
@@ -134,6 +141,10 @@ public sealed class StreamMock : Stream
         _capturedCopyToAsyncParameters
            .Should().ContainSingle()
            .Which.Should().BeSameAs(targetStream);
+
+    public void DisposeMustHaveBeenCalled() => _disposeCallCount.Should().Be(1);
+
+    public void DisposeAsyncMustHaveBeenCalled() => _disposeAsyncCallCount.Should().Be(1);
 }
 
 public sealed class AsyncResultNullObject : IAsyncResult

@@ -47,6 +47,7 @@ public sealed class TemporaryStreamForwardingTests
 
         _temporaryStream.IsDisposed.Should().BeTrue();
         _streamMock.CloseMustNotHaveBeenCalled();
+        _streamMock.DisposeMustHaveBeenCalled();
     }
 
     [Fact]
@@ -67,5 +68,23 @@ public sealed class TemporaryStreamForwardingTests
         await _temporaryStream.CopyToAsync(targetStream, TestContext.Current.CancellationToken);
 
         _streamMock.CopyToAsyncMustHaveBeenCalledWith(targetStream);
+    }
+
+    [Fact]
+    public void Dispose_MustForwardToUnderlyingStream()
+    {
+        _temporaryStream.Dispose();
+
+        _temporaryStream.IsDisposed.Should().BeTrue();
+        _streamMock.DisposeMustHaveBeenCalled();
+    }
+
+    [Fact]
+    public async Task DisposeAsync_MustForwardToUnderlyingStream()
+    {
+        await _temporaryStream.DisposeAsync();
+
+        _temporaryStream.IsDisposed.Should().BeTrue();
+        _streamMock.DisposeAsyncMustHaveBeenCalled();
     }
 }
