@@ -237,4 +237,13 @@ public sealed class TemporaryStreamForwardingTests
 
         result.Should().Be(value);
     }
+
+    [Fact]
+    public void EndRead_MustForwardToUnderlyingStream()
+    {
+        var result = _temporaryStream.EndRead(_streamMock.AsyncResult);
+
+        result.Should().Be(StreamMock.EndReadReturnValue);
+        _streamMock.EndReadMustHaveBeenCalledWith(_streamMock.AsyncResult);
+    }
 }

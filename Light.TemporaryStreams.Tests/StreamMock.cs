@@ -8,6 +8,7 @@ namespace Light.TemporaryStreams.Tests;
 
 public sealed class StreamMock : Stream
 {
+    public const int EndReadReturnValue = 42;
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -90,7 +91,11 @@ public sealed class StreamMock : Stream
         return ValueTask.CompletedTask;
     }
 
-    public override int EndRead(IAsyncResult asyncResult) => base.EndRead(asyncResult);
+    public override int EndRead(IAsyncResult asyncResult)
+    {
+        _callTrackers.TrackCall(asyncResult);
+        return EndReadReturnValue;
+    }
 
     public override void EndWrite(IAsyncResult asyncResult) => base.EndWrite(asyncResult);
 
@@ -165,5 +170,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalled(nameof(FlushAsync));
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(FlushAsync));
+    }
+
+    public void EndReadMustHaveBeenCalledWith(IAsyncResult asyncResult)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(EndRead), asyncResult);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndRead));
     }
 }
