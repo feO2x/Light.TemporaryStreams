@@ -97,7 +97,7 @@ public sealed class StreamMock : Stream
         return EndReadReturnValue;
     }
 
-    public override void EndWrite(IAsyncResult asyncResult) => base.EndWrite(asyncResult);
+    public override void EndWrite(IAsyncResult asyncResult) => _callTrackers.TrackCall(asyncResult);
 
     public override void Flush() => _callTrackers.TrackCall();
 
@@ -176,5 +176,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(EndRead), asyncResult);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndRead));
+    }
+
+    public void EndWriteMustHaveBeenCalledWith(IAsyncResult asyncResult)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(EndWrite), asyncResult);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndWrite));
     }
 }
