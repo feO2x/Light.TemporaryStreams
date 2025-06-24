@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
@@ -274,5 +275,16 @@ public sealed class TemporaryStreamForwardingTests
 
         result.Should().Be(StreamMock.ReadReturnValue);
         _streamMock.ReadMustHaveCalledWith(buffer);
+    }
+
+    [Fact]
+    public async Task ReadAsync_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[3];
+
+        var result = await _temporaryStream.ReadAsync(buffer, 0, buffer.Length, CancellationToken.None);
+
+        result.Should().Be(StreamMock.ReadReturnValue);
+        _streamMock.ReadAsyncMustHaveBeenCalledWith(buffer, 0, buffer.Length, CancellationToken.None);
     }
 }

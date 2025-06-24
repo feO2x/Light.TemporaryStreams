@@ -124,8 +124,11 @@ public sealed class StreamMock : Stream
         return ReadReturnValue;
     }
 
-    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
-        base.ReadAsync(buffer, offset, count, cancellationToken);
+    public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        _callTrackers.TrackCall(buffer, offset, count, cancellationToken);
+        return Task.FromResult(ReadReturnValue);
+    }
 
     public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = new ()) =>
         base.ReadAsync(buffer, cancellationToken);
@@ -207,5 +210,16 @@ public sealed class StreamMock : Stream
         var callTracker = _callTrackers.GetRequiredCallTracker<CallTracker<ImmutableArray<byte>>>(ReadSpanName);
         callTracker.CapturedParameters.Should().ContainSingle().Which.Should().Equal(buffer);
         _callTrackers.MustHaveNoOtherCallsExcept(ReadSpanName);
+    }
+
+    public void ReadAsyncMustHaveBeenCalledWith(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken
+    )
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(ReadAsync), buffer, offset, count, cancellationToken);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadAsync));
     }
 }
