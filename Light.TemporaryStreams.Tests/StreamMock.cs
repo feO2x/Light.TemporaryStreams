@@ -8,7 +8,7 @@ namespace Light.TemporaryStreams.Tests;
 
 public sealed class StreamMock : Stream
 {
-    public const int EndReadReturnValue = 42;
+    public const int ReadReturnValue = 42;
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -94,7 +94,7 @@ public sealed class StreamMock : Stream
     public override int EndRead(IAsyncResult asyncResult)
     {
         _callTrackers.TrackCall(asyncResult);
-        return EndReadReturnValue;
+        return ReadReturnValue;
     }
 
     public override void EndWrite(IAsyncResult asyncResult) => _callTrackers.TrackCall(asyncResult);
@@ -108,9 +108,16 @@ public sealed class StreamMock : Stream
     }
 
 
-    public override int Read(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        _callTrackers.TrackCall(buffer, offset, count);
+        return ReadReturnValue;
+    }
 
-    public override int Read(Span<byte> buffer) => base.Read(buffer);
+    public override int Read(Span<byte> buffer)
+    {
+        return base.Read(buffer);
+    }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
         base.ReadAsync(buffer, offset, count, cancellationToken);
@@ -182,5 +189,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(EndWrite), asyncResult);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndWrite));
+    }
+
+    public void ReadMustHaveBeenCalledWith(byte[] buffer, int offset, int count)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(Read), buffer, offset, count);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Read));
     }
 }
