@@ -15,6 +15,9 @@ public sealed class StreamMock : Stream
     private const string ReadSpanName = "Read(Span<byte> buffer)";
     private const string ReadAsyncMemoryName = "ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)";
     private const string WriteSpanName = "Write(ReadOnlySpan<byte> buffer)";
+
+    private const string WriteAsyncMemoryName =
+        "WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)";
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -166,8 +169,12 @@ public sealed class StreamMock : Stream
         return Task.CompletedTask;
     }
 
-    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = new ()) =>
-        base.WriteAsync(buffer, cancellationToken);
+    public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        // ReSharper disable once ExplicitCallerInfoArgument -- WriteAsync is already used by another method
+        _callTrackers.TrackCall(buffer, cancellationToken, WriteAsyncMemoryName);
+        return ValueTask.CompletedTask;
+    }
 
     public override void WriteByte(byte value) => base.WriteByte(value);
 
@@ -284,5 +291,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(WriteAsync), buffer, offset, bufferLength, none);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(WriteAsync));
+    }
+
+    public void WriteAsyncMustHaveBeenCalledWith(ReadOnlyMemory<byte> buffer, CancellationToken none)
+    {
+        _callTrackers.MustHaveBeenCalledWith(WriteAsyncMemoryName, buffer, none);
+        _callTrackers.MustHaveNoOtherCallsExcept(WriteAsyncMemoryName);
     }
 }
