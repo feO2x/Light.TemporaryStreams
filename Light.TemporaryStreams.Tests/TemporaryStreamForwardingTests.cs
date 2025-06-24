@@ -319,4 +319,14 @@ public sealed class TemporaryStreamForwardingTests
         result.Should().Be(StreamMock.SeekReturnValue);
         _streamMock.SeekMustHaveBeenCalledWith(offset, origin);
     }
+
+    [Theory]
+    [InlineData(42)]
+    [InlineData(2000)]
+    public void SetLength_MustForwardToUnderlyingStream(long value)
+    {
+        _temporaryStream.SetLength(value);
+
+        _streamMock.SetLengthMustHaveBeenCalledWith(value);
+    }
 }

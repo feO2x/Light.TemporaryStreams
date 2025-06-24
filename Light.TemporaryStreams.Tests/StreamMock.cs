@@ -151,7 +151,7 @@ public sealed class StreamMock : Stream
         return SeekReturnValue;
     }
 
-    public override void SetLength(long value) => throw new NotImplementedException();
+    public override void SetLength(long value) => _callTrackers.TrackCall(value);
 
     public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
 
@@ -253,5 +253,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(Seek), offset, origin);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(Seek));
+    }
+
+    public void SetLengthMustHaveBeenCalledWith(long value)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(SetLength), value);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(SetLength));
     }
 }
