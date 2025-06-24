@@ -307,4 +307,16 @@ public sealed class TemporaryStreamForwardingTests
         result.Should().Be(StreamMock.ReadReturnValue);
         _streamMock.ReadByteMustHaveBeenCalled();
     }
+
+    [Theory]
+    [InlineData(42, SeekOrigin.Begin)]
+    [InlineData(89, SeekOrigin.Current)]
+    [InlineData(12, SeekOrigin.End)]
+    public void Seek_MustForwardToUnderlyingStream(long offset, SeekOrigin origin)
+    {
+        var result = _temporaryStream.Seek(offset, origin);
+
+        result.Should().Be(StreamMock.SeekReturnValue);
+        _streamMock.SeekMustHaveBeenCalledWith(offset, origin);
+    }
 }

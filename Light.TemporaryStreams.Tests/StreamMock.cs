@@ -11,6 +11,7 @@ namespace Light.TemporaryStreams.Tests;
 public sealed class StreamMock : Stream
 {
     public const int ReadReturnValue = 42;
+    public const int SeekReturnValue = 123;
     private const string ReadSpanName = "Read(Span<byte> buffer)";
     private const string ReadAsyncMemoryName = "ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)";
     private readonly CallTrackers _callTrackers = new ();
@@ -144,7 +145,11 @@ public sealed class StreamMock : Stream
         return ReadReturnValue;
     }
 
-    public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        _callTrackers.TrackCall(offset, origin);
+        return SeekReturnValue;
+    }
 
     public override void SetLength(long value) => throw new NotImplementedException();
 
@@ -242,5 +247,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalled(nameof(ReadByte));
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadByte));
+    }
+
+    public void SeekMustHaveBeenCalledWith(long offset, SeekOrigin origin)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(Seek), offset, origin);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Seek));
     }
 }
