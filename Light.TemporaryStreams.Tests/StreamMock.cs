@@ -18,6 +18,7 @@ public sealed class StreamMock : Stream
 
     private const string WriteAsyncMemoryName =
         "WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)";
+
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -47,18 +48,6 @@ public sealed class StreamMock : Stream
         return AsyncResult;
     }
 
-    public void BeginReadMustHaveBeenCalledWith(
-        byte[] buffer,
-        int offset,
-        int count,
-        AsyncCallback? callback,
-        object? state
-    )
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(BeginRead), buffer, offset, count, callback, state);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(BeginRead));
-    }
-
     public override IAsyncResult BeginWrite(
         byte[] buffer,
         int offset,
@@ -69,18 +58,6 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.TrackCall(buffer, offset, count, callback, state);
         return AsyncResult;
-    }
-
-    public void BeginWriteMustHaveBeenCalledWith(
-        byte[] buffer,
-        int offset,
-        int count,
-        AsyncCallback? callback,
-        object? state
-    )
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(BeginWrite), buffer, offset, count, callback, state);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(BeginWrite));
     }
 
     public override void CopyTo(Stream destination, int bufferSize) => _callTrackers.TrackCall(destination);
@@ -178,59 +155,46 @@ public sealed class StreamMock : Stream
 
     public override void WriteByte(byte value) => _callTrackers.TrackCall(value);
 
-    public void CopyToMustHaveBeenCalledWith(Stream targetStream)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(CopyTo), targetStream);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(CopyTo));
-    }
+    public void BeginReadMustHaveBeenCalledWith(
+        byte[] buffer,
+        int offset,
+        int count,
+        AsyncCallback? callback,
+        object? state
+    ) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(BeginRead), buffer, offset, count, callback, state);
 
-    public void CopyToAsyncMustHaveBeenCalledWith(Stream targetStream)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(CopyToAsync), targetStream);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(CopyToAsync));
-    }
+    public void BeginWriteMustHaveBeenCalledWith(
+        byte[] buffer,
+        int offset,
+        int count,
+        AsyncCallback? callback,
+        object? state
+    ) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(BeginWrite), buffer, offset, count, callback, state);
 
-    public void DisposeMustHaveBeenCalled()
-    {
-        _callTrackers.MustHaveBeenCalled(nameof(Dispose));
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Dispose));
-    }
+    public void CopyToMustHaveBeenCalledWith(Stream targetStream) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(CopyTo), targetStream);
 
-    public void DisposeAsyncMustHaveBeenCalled()
-    {
-        _callTrackers.MustHaveBeenCalled(nameof(DisposeAsync));
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(DisposeAsync));
-    }
+    public void CopyToAsyncMustHaveBeenCalledWith(Stream targetStream) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(CopyToAsync), targetStream);
 
-    public void FlushMustHaveBeenCalled()
-    {
-        _callTrackers.MustHaveBeenCalled(nameof(Flush));
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Flush));
-    }
+    public void DisposeMustHaveBeenCalled() => _callTrackers.MustHaveBeenOnlyMethodCalled(nameof(Dispose));
 
-    public void FlushAsyncMustHaveBeenCalled()
-    {
-        _callTrackers.MustHaveBeenCalled(nameof(FlushAsync));
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(FlushAsync));
-    }
+    public void DisposeAsyncMustHaveBeenCalled() => _callTrackers.MustHaveBeenOnlyMethodCalled(nameof(DisposeAsync));
 
-    public void EndReadMustHaveBeenCalledWith(IAsyncResult asyncResult)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(EndRead), asyncResult);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndRead));
-    }
+    public void FlushMustHaveBeenCalled() => _callTrackers.MustHaveBeenOnlyMethodCalled(nameof(Flush));
 
-    public void EndWriteMustHaveBeenCalledWith(IAsyncResult asyncResult)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(EndWrite), asyncResult);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(EndWrite));
-    }
+    public void FlushAsyncMustHaveBeenCalled() => _callTrackers.MustHaveBeenOnlyMethodCalled(nameof(FlushAsync));
 
-    public void ReadMustHaveBeenCalledWith(byte[] buffer, int offset, int count)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(Read), buffer, offset, count);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Read));
-    }
+    public void EndReadMustHaveBeenCalledWith(IAsyncResult asyncResult) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(EndRead), asyncResult);
+
+    public void EndWriteMustHaveBeenCalledWith(IAsyncResult asyncResult) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(EndWrite), asyncResult);
+
+    public void ReadMustHaveBeenCalledWith(byte[] buffer, int offset, int count) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(Read), buffer, offset, count);
 
     public void ReadMustHaveCalledWith(byte[] buffer)
     {
@@ -244,41 +208,22 @@ public sealed class StreamMock : Stream
         int offset,
         int count,
         CancellationToken cancellationToken
-    )
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(ReadAsync), buffer, offset, count, cancellationToken);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadAsync));
-    }
+    ) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(ReadAsync), buffer, offset, count, cancellationToken);
 
-    public void ReadAsyncMustHaveBeenCalledWith(Memory<byte> buffer, CancellationToken cancellationToken)
-    {
-        _callTrackers.MustHaveBeenCalledWith(ReadAsyncMemoryName, buffer, cancellationToken);
-        _callTrackers.MustHaveNoOtherCallsExcept(ReadAsyncMemoryName);
-    }
+    public void ReadAsyncMustHaveBeenCalledWith(Memory<byte> buffer, CancellationToken cancellationToken) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(ReadAsyncMemoryName, buffer, cancellationToken);
 
-    public void ReadByteMustHaveBeenCalled()
-    {
-        _callTrackers.MustHaveBeenCalled(nameof(ReadByte));
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadByte));
-    }
+    public void ReadByteMustHaveBeenCalled() => _callTrackers.MustHaveBeenOnlyMethodCalled(nameof(ReadByte));
 
-    public void SeekMustHaveBeenCalledWith(long offset, SeekOrigin origin)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(Seek), offset, origin);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Seek));
-    }
+    public void SeekMustHaveBeenCalledWith(long offset, SeekOrigin origin) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(Seek), offset, origin);
 
-    public void SetLengthMustHaveBeenCalledWith(long value)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(SetLength), value);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(SetLength));
-    }
+    public void SetLengthMustHaveBeenCalledWith(long value) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(SetLength), value);
 
-    public void WriteMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(Write), buffer, offset, bufferLength);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Write));
-    }
+    public void WriteMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(Write), buffer, offset, bufferLength);
 
     public void WriteMustHaveBeenCalledWith(byte[] buffer)
     {
@@ -287,21 +232,12 @@ public sealed class StreamMock : Stream
         _callTrackers.MustHaveNoOtherCallsExcept(WriteSpanName);
     }
 
-    public void WriteAsyncMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength, CancellationToken none)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(WriteAsync), buffer, offset, bufferLength, none);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(WriteAsync));
-    }
+    public void WriteAsyncMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength, CancellationToken none) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(WriteAsync), buffer, offset, bufferLength, none);
 
-    public void WriteAsyncMustHaveBeenCalledWith(ReadOnlyMemory<byte> buffer, CancellationToken none)
-    {
-        _callTrackers.MustHaveBeenCalledWith(WriteAsyncMemoryName, buffer, none);
-        _callTrackers.MustHaveNoOtherCallsExcept(WriteAsyncMemoryName);
-    }
+    public void WriteAsyncMustHaveBeenCalledWith(ReadOnlyMemory<byte> buffer, CancellationToken none) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(WriteAsyncMemoryName, buffer, none);
 
-    public void WriteByteMustHaveBeenCalledWith(byte value)
-    {
-        _callTrackers.MustHaveBeenCalledWith(nameof(WriteByte), value);
-        _callTrackers.MustHaveNoOtherCallsExcept(nameof(WriteByte));
-    }
+    public void WriteByteMustHaveBeenCalledWith(byte value) =>
+        _callTrackers.MustHaveBeenOnlyMethodCalledWith(nameof(WriteByte), value);
 }
