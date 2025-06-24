@@ -241,20 +241,20 @@ public sealed class CallTrackers
         return castCallTracker;
     }
 
-    private T GetRequiredCallTracker<T>(string name)
+    public T GetRequiredCallTracker<T>(string name)
     {
-        if (_callTrackers.TryGetValue(name, out var callTracker))
+        if (!_callTrackers.TryGetValue(name, out var callTracker))
         {
-            if (callTracker is not T castCallTracker)
-            {
-                throw new XunitException(
-                    $"There is a call tracker for '{name}', but it is not of type {typeof(T)}. Istead, it is of type {callTracker.GetType()}."
-                );
-            }
-
-            return castCallTracker;
+            throw new XunitException($"{name} has not been called.");
         }
 
-        throw new XunitException($"{name} has not been called.");
+        if (callTracker is not T castCallTracker)
+        {
+            throw new XunitException(
+                $"There is a call tracker for '{name}', but it is not of type {typeof(T)}. Instead, it is of type {callTracker.GetType()}."
+            );
+        }
+
+        return castCallTracker;
     }
 }

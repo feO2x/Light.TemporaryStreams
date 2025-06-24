@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Immutable;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
 using Light.TemporaryStreams.Tests.CallTracking;
 
 namespace Light.TemporaryStreams.Tests;
@@ -9,6 +11,7 @@ namespace Light.TemporaryStreams.Tests;
 public sealed class StreamMock : Stream
 {
     public const int ReadReturnValue = 42;
+    private const string ReadSpanName = "Read(Span<byte> buffer)";
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -116,7 +119,9 @@ public sealed class StreamMock : Stream
 
     public override int Read(Span<byte> buffer)
     {
-        return base.Read(buffer);
+        // ReSharper disable once ExplicitCallerInfoArgument -- Read is already used by another method
+        _callTrackers.TrackCall(buffer.ToImmutableArray(), ReadSpanName);
+        return ReadReturnValue;
     }
 
     public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
@@ -195,5 +200,12 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(Read), buffer, offset, count);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(Read));
+    }
+
+    public void ReadMustHaveCalledWith(byte[] buffer)
+    {
+        var callTracker = _callTrackers.GetRequiredCallTracker<CallTracker<ImmutableArray<byte>>>(ReadSpanName);
+        callTracker.CapturedParameters.Should().ContainSingle().Which.Should().Equal(buffer);
+        _callTrackers.MustHaveNoOtherCallsExcept(ReadSpanName);
     }
 }

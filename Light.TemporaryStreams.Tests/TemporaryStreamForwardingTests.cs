@@ -264,4 +264,15 @@ public sealed class TemporaryStreamForwardingTests
         result.Should().Be(StreamMock.ReadReturnValue);
         _streamMock.ReadMustHaveBeenCalledWith(buffer, 0, buffer.Length);
     }
+
+    [Fact]
+    public void ReadSpan_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[10];
+        new Random(42).NextBytes(buffer);
+        var result = _temporaryStream.Read(buffer.AsSpan());
+
+        result.Should().Be(StreamMock.ReadReturnValue);
+        _streamMock.ReadMustHaveCalledWith(buffer);
+    }
 }
