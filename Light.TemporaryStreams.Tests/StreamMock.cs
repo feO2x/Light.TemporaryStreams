@@ -11,12 +11,22 @@ public sealed class StreamMock : Stream
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
+
+    public bool CanReadReturnValue { get; set; } = true;
+    public override bool CanRead => CanReadReturnValue;
+
     public bool CanSeekReturnValue { get; init; } = true;
-    public override bool CanRead { get; }
     public override bool CanSeek => CanSeekReturnValue;
-    public override bool CanTimeout { get; }
-    public override bool CanWrite { get; }
-    public override long Length { get; }
+
+    public bool CanTimeoutReturnValue { get; set; }
+    public override bool CanTimeout => CanTimeoutReturnValue;
+
+    public bool CanWriteReturnValue { get; set; }
+    public override bool CanWrite => CanWriteReturnValue;
+
+    public long LengthReturnValue { get; set; } = 4321;
+    public override long Length => LengthReturnValue;
+
     public override long Position { get; set; }
     public override int ReadTimeout { get; set; }
     public override int WriteTimeout { get; set; }

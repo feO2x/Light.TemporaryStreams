@@ -122,4 +122,119 @@ public sealed class TemporaryStreamForwardingTests
 
         _streamMock.FlushAsyncMustHaveBeenCalled();
     }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanRead_MustForwardToUnderlyingStream(bool value)
+    {
+        _streamMock.CanReadReturnValue = value;
+
+        var result = _temporaryStream.CanRead;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanTimeout_MustForwardToUnderlyingStream(bool value)
+    {
+        _streamMock.CanTimeoutReturnValue = value;
+
+        var result = _temporaryStream.CanTimeout;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CanWrite_MustForwardToUnderlyingStream(bool value)
+    {
+        _streamMock.CanWriteReturnValue = value;
+
+        var result = _temporaryStream.CanWrite;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(4321)]
+    [InlineData(84291)]
+    [InlineData(2049)]
+    public void Length_MustForwardToUnderlyingStream(long value)
+    {
+        _streamMock.LengthReturnValue = value;
+
+        var result = _temporaryStream.Length;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(5)]
+    [InlineData(3)]
+    public void SetPosition_MustForwardToUnderlyingStream(long value)
+    {
+        _temporaryStream.Position = value;
+
+        _streamMock.Position.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(401)]
+    [InlineData(123)]
+    public void GetPosition_MustForwardToUnderlyingStream(long value)
+    {
+        _streamMock.Position = value;
+
+        var result = _temporaryStream.Position;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(5000)]
+    [InlineData(3566)]
+    public void SetReadTimeout_MustForwardToUnderlyingStream(int value)
+    {
+        _temporaryStream.ReadTimeout = value;
+
+        _streamMock.ReadTimeout.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(7400)]
+    [InlineData(2300)]
+    public void GetReadTimeout_MustForwardToUnderlyingStream(int value)
+    {
+        _streamMock.ReadTimeout = value;
+
+        var result = _temporaryStream.ReadTimeout;
+
+        result.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(5000)]
+    [InlineData(20000)]
+    public void SetWriteTimeout_MustForwardToUnderlyingStream(int value)
+    {
+        _temporaryStream.WriteTimeout = value;
+
+        _streamMock.WriteTimeout.Should().Be(value);
+    }
+
+    [Theory]
+    [InlineData(7800)]
+    [InlineData(9500)]
+    public void GetWriteTimeout_MustForwardToUnderlyingStream(int value)
+    {
+        _streamMock.WriteTimeout = value;
+
+        var result = _temporaryStream.WriteTimeout;
+
+        result.Should().Be(value);
+    }
 }
