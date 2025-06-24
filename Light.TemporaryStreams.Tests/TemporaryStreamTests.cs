@@ -200,6 +200,39 @@ public static class TemporaryStreamTests
         filePath.Should().BeNull();
     }
 
+    [Fact]
+    public static void GetUnderlyingFilePath_ThrowsException_WhenUnderlyingStreamIsAMemoryStream()
+    {
+        using var temporaryStream = new TemporaryStream(new MemoryStream());
+
+        try
+        {
+            temporaryStream.GetUnderlyingFilePath();
+            Assert.Fail("Previous line should have thrown an exception");
+        }
+        catch (InvalidOperationException exception)
+        {
+            exception.Message.Should().Be("The underlying stream is not a file stream.");
+        }
+    }
+
+    [Fact]
+    public static void GetUnderlyingFilePath_ShouldReturnFilePath_WhenUnderlyingStreamIsAFileStream()
+    {
+        var (temporaryStream, fileStream) = SetUpTemporaryFileBackedStream();
+
+        try
+        {
+            var filePath = temporaryStream.GetUnderlyingFilePath();
+
+            filePath.Should().Be(fileStream.Name);
+        }
+        finally
+        {
+            temporaryStream.Dispose();
+        }
+    }
+
     private static (TemporaryStream temporaryStream, FileStream fileStream) SetUpTemporaryFileBackedStream(
         Action<TemporaryStream, Exception>? onFileDeletionError = null
     )
