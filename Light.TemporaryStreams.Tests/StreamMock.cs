@@ -138,7 +138,11 @@ public sealed class StreamMock : Stream
         return ValueTask.FromResult(ReadReturnValue);
     }
 
-    public override int ReadByte() => base.ReadByte();
+    public override int ReadByte()
+    {
+        _callTrackers.TrackCall();
+        return ReadReturnValue;
+    }
 
     public override long Seek(long offset, SeekOrigin origin) => throw new NotImplementedException();
 
@@ -232,5 +236,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(ReadAsyncMemoryName, buffer, cancellationToken);
         _callTrackers.MustHaveNoOtherCallsExcept(ReadAsyncMemoryName);
+    }
+
+    public void ReadByteMustHaveBeenCalled()
+    {
+        _callTrackers.MustHaveBeenCalled(nameof(ReadByte));
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadByte));
     }
 }
