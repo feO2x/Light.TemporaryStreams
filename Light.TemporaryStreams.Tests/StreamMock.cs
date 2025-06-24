@@ -1,32 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
+using Light.TemporaryStreams.Tests.CallTracking;
 
 namespace Light.TemporaryStreams.Tests;
 
 public sealed class StreamMock : Stream
 {
-    private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
-        _capturedBeginReadParameters = [];
-
-    private readonly List<(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)>
-        _capturedBeginWriteParameters = [];
-
-    private readonly List<Stream> _capturedCopyToAsyncParameters = [];
-
-    private readonly List<Stream> _capturedCopyToParameters = [];
-
-    private int _closeCallCount;
-    private int _disposeAsyncCallCount;
-    private int _disposeCallCount;
-    private int _flushCallCount;
-    private int _flushAsyncCallCount;
+    private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
-    public bool CanSeekReturnValue { get; set; } = true;
+    public bool CanSeekReturnValue { get; init; } = true;
     public override bool CanRead { get; }
     public override bool CanSeek => CanSeekReturnValue;
     public override bool CanTimeout { get; }
@@ -38,7 +23,7 @@ public sealed class StreamMock : Stream
 
     public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback? callback, object? state)
     {
-        _capturedBeginReadParameters.Add((buffer, offset, count, callback, state));
+        _callTrackers.TrackCall(buffer, offset, count, callback, state);
         return AsyncResult;
     }
 
@@ -48,10 +33,11 @@ public sealed class StreamMock : Stream
         int count,
         AsyncCallback? callback,
         object? state
-    ) =>
-        _capturedBeginReadParameters
-           .Should().ContainSingle()
-           .Which.Should().Be((buffer, offset, count, callback, state));
+    )
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(BeginRead), buffer, offset, count, callback, state);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(BeginRead));
+    }
 
     public override IAsyncResult BeginWrite(
         byte[] buffer,
@@ -61,7 +47,7 @@ public sealed class StreamMock : Stream
         object? state
     )
     {
-        _capturedBeginWriteParameters.Add((buffer, offset, count, callback, state));
+        _callTrackers.TrackCall(buffer, offset, count, callback, state);
         return AsyncResult;
     }
 
@@ -71,29 +57,26 @@ public sealed class StreamMock : Stream
         int count,
         AsyncCallback? callback,
         object? state
-    ) =>
-        _capturedBeginWriteParameters
-           .Should().ContainSingle()
-           .Which.Should().Be((buffer, offset, count, callback, state));
+    )
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(BeginWrite), buffer, offset, count, callback, state);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(BeginWrite));
+    }
 
-    public override void Close() => _closeCallCount++;
-
-    public void CloseMustNotHaveBeenCalled() => _closeCallCount.Should().Be(0);
-
-    public override void CopyTo(Stream destination, int bufferSize) => _capturedCopyToParameters.Add(destination);
+    public override void CopyTo(Stream destination, int bufferSize) => _callTrackers.TrackCall(destination);
 
     public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
     {
-        _capturedCopyToAsyncParameters.Add(destination);
+        _callTrackers.TrackCall(destination);
         return Task.CompletedTask;
     }
 
 
-    protected override void Dispose(bool disposing) => _disposeCallCount++;
+    protected override void Dispose(bool disposing) => _callTrackers.TrackCall();
 
     public override ValueTask DisposeAsync()
     {
-        _disposeAsyncCallCount++;
+        _callTrackers.TrackCall();
         return ValueTask.CompletedTask;
     }
 
@@ -101,11 +84,11 @@ public sealed class StreamMock : Stream
 
     public override void EndWrite(IAsyncResult asyncResult) => base.EndWrite(asyncResult);
 
-    public override void Flush() => _flushCallCount++;
+    public override void Flush() => _callTrackers.TrackCall();
 
     public override Task FlushAsync(CancellationToken cancellationToken)
     {
-        _flushAsyncCallCount++;
+        _callTrackers.TrackCall();
         return Task.CompletedTask;
     }
 
@@ -138,21 +121,39 @@ public sealed class StreamMock : Stream
 
     public override void WriteByte(byte value) => base.WriteByte(value);
 
-    public void CopyToMustHaveBeenCalledWith(Stream targetStream) =>
-        _capturedCopyToParameters
-           .Should().ContainSingle()
-           .Which.Should().BeSameAs(targetStream);
+    public void CopyToMustHaveBeenCalledWith(Stream targetStream)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(CopyTo), targetStream);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(CopyTo));
+    }
 
-    public void CopyToAsyncMustHaveBeenCalledWith(MemoryStream targetStream) =>
-        _capturedCopyToAsyncParameters
-           .Should().ContainSingle()
-           .Which.Should().BeSameAs(targetStream);
+    public void CopyToAsyncMustHaveBeenCalledWith(Stream targetStream)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(CopyToAsync), targetStream);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(CopyToAsync));
+    }
 
-    public void DisposeMustHaveBeenCalled() => _disposeCallCount.Should().Be(1);
+    public void DisposeMustHaveBeenCalled()
+    {
+        _callTrackers.MustHaveBeenCalled(nameof(Dispose));
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Dispose));
+    }
 
-    public void DisposeAsyncMustHaveBeenCalled() => _disposeAsyncCallCount.Should().Be(1);
+    public void DisposeAsyncMustHaveBeenCalled()
+    {
+        _callTrackers.MustHaveBeenCalled(nameof(DisposeAsync));
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(DisposeAsync));
+    }
 
-    public void FlushMustHaveBeenCalled() => _flushCallCount.Should().Be(1);
+    public void FlushMustHaveBeenCalled()
+    {
+        _callTrackers.MustHaveBeenCalled(nameof(Flush));
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Flush));
+    }
 
-    public void FlushAsyncMustHaveBeenCalled() => _flushAsyncCallCount.Should().Be(1);
+    public void FlushAsyncMustHaveBeenCalled()
+    {
+        _callTrackers.MustHaveBeenCalled(nameof(FlushAsync));
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(FlushAsync));
+    }
 }

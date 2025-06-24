@@ -193,7 +193,7 @@ public class TemporaryStream : Stream
     /// Disposes of the current instance of the <see cref="TemporaryStream" /> class.
     /// </para>
     /// </summary>
-    public override void Close() => Dispose();
+    public override void Close() => Dispose(true);
 
     /// <inheritdoc />
     public override void CopyTo(Stream destination, int bufferSize) =>

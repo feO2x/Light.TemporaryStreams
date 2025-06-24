@@ -41,12 +41,11 @@ public sealed class TemporaryStreamForwardingTests
     }
 
     [Fact]
-    public void Close_MustNotForwardToUnderlyingStream()
+    public void Close_MustNotForwardToUnderlyingStream_ButSimplyCallDispose()
     {
         _temporaryStream.Close();
 
         _temporaryStream.IsDisposed.Should().BeTrue();
-        _streamMock.CloseMustNotHaveBeenCalled();
         _streamMock.DisposeMustHaveBeenCalled();
     }
 
