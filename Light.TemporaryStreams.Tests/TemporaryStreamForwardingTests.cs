@@ -338,4 +338,14 @@ public sealed class TemporaryStreamForwardingTests
 
         _streamMock.WriteMustHaveBeenCalledWith(buffer, 0, buffer.Length);
     }
+
+    [Fact]
+    public void WriteSpan_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[10];
+        new Random(42).NextBytes(buffer);
+        _temporaryStream.Write(buffer.AsSpan());
+
+        _streamMock.WriteMustHaveBeenCalledWith(buffer);
+    }
 }

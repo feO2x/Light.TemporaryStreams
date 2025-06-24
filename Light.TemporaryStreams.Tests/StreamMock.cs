@@ -14,6 +14,7 @@ public sealed class StreamMock : Stream
     public const int SeekReturnValue = 123;
     private const string ReadSpanName = "Read(Span<byte> buffer)";
     private const string ReadAsyncMemoryName = "ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)";
+    private const string WriteSpanName = "Write(ReadOnlySpan<byte> buffer)";
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -155,7 +156,9 @@ public sealed class StreamMock : Stream
 
     public override void Write(byte[] buffer, int offset, int count) => _callTrackers.TrackCall(buffer, offset, count);
 
-    public override void Write(ReadOnlySpan<byte> buffer) => base.Write(buffer);
+    public override void Write(ReadOnlySpan<byte> buffer) =>
+        // ReSharper disable once ExplicitCallerInfoArgument -- Write is already used by another method
+        _callTrackers.TrackCall(buffer.ToImmutableArray(), WriteSpanName);
 
     public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
         base.WriteAsync(buffer, offset, count, cancellationToken);
@@ -265,5 +268,12 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(Write), buffer, offset, bufferLength);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(Write));
+    }
+
+    public void WriteMustHaveBeenCalledWith(byte[] buffer)
+    {
+        var callTracker = _callTrackers.GetRequiredCallTracker<CallTracker<ImmutableArray<byte>>>(WriteSpanName);
+        callTracker.CapturedParameters.Should().ContainSingle().Which.Should().Equal(buffer);
+        _callTrackers.MustHaveNoOtherCallsExcept(WriteSpanName);
     }
 }
