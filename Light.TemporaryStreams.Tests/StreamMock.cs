@@ -176,7 +176,7 @@ public sealed class StreamMock : Stream
         return ValueTask.CompletedTask;
     }
 
-    public override void WriteByte(byte value) => base.WriteByte(value);
+    public override void WriteByte(byte value) => _callTrackers.TrackCall(value);
 
     public void CopyToMustHaveBeenCalledWith(Stream targetStream)
     {
@@ -297,5 +297,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(WriteAsyncMemoryName, buffer, none);
         _callTrackers.MustHaveNoOtherCallsExcept(WriteAsyncMemoryName);
+    }
+
+    public void WriteByteMustHaveBeenCalledWith(byte value)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(WriteByte), value);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(WriteByte));
     }
 }

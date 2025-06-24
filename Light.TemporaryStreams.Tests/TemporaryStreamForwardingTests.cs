@@ -366,4 +366,14 @@ public sealed class TemporaryStreamForwardingTests
 
         _streamMock.WriteAsyncMustHaveBeenCalledWith(buffer, CancellationToken.None);
     }
+
+    [Theory]
+    [InlineData(byte.MaxValue)]
+    [InlineData(42)]
+    public void WriteByte_MustForwardToUnderlyingStream(byte value)
+    {
+        _temporaryStream.WriteByte(value);
+
+        _streamMock.WriteByteMustHaveBeenCalledWith(value);
+    }
 }
