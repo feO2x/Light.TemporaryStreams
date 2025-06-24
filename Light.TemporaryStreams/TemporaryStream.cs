@@ -48,7 +48,7 @@ public class TemporaryStream : Stream
     public TemporaryStream(
         Stream underlyingStream,
         bool isDeletingFileStreamOnDispose = true,
-        Action<Exception>? onFileDeletionError = null
+        Action<TemporaryStream, Exception>? onFileDeletionError = null
     )
     {
         UnderlyingStream = underlyingStream.MustNotBeNull();
@@ -95,7 +95,7 @@ public class TemporaryStream : Stream
     /// <summary>
     /// Gets the delegate that is executed when an exception occurs while deleting the underlying file.
     /// </summary>
-    public Action<Exception>? OnFileDeletionError { get; }
+    public Action<TemporaryStream, Exception>? OnFileDeletionError { get; }
 
     /// <inheritdoc />
     public override long Position
@@ -252,7 +252,7 @@ public class TemporaryStream : Stream
                 }
                 else
                 {
-                    OnFileDeletionError.Invoke(exception);
+                    OnFileDeletionError.Invoke(this, exception);
                 }
             }
         }
