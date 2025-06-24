@@ -171,6 +171,35 @@ public static class TemporaryStreamTests
         }
     }
 
+    [Fact]
+    public static void TryGetUnderlyingFilePath_ShouldReturnFilePath_WhenUnderlyingStreamIsAFileStream()
+    {
+        var (temporaryStream, fileStream) = SetUpTemporaryFileBackedStream();
+
+        try
+        {
+            var result = temporaryStream.TryGetUnderlyingFilePath(out var filePath);
+
+            result.Should().BeTrue();
+            filePath.Should().Be(fileStream.Name);
+        }
+        finally
+        {
+            temporaryStream.Dispose();
+        }
+    }
+
+    [Fact]
+    public static void TryGetUnderlyingFilePath_ShouldReturnFalse_WhenUnderlyingStreamIsAMemoryStream()
+    {
+        using var temporaryStream = new TemporaryStream(new MemoryStream());
+
+        var result = temporaryStream.TryGetUnderlyingFilePath(out var filePath);
+
+        result.Should().BeFalse();
+        filePath.Should().BeNull();
+    }
+
     private static (TemporaryStream temporaryStream, FileStream fileStream) SetUpTemporaryFileBackedStream(
         Action<TemporaryStream, Exception>? onFileDeletionError = null
     )
