@@ -160,8 +160,11 @@ public sealed class StreamMock : Stream
         // ReSharper disable once ExplicitCallerInfoArgument -- Write is already used by another method
         _callTrackers.TrackCall(buffer.ToImmutableArray(), WriteSpanName);
 
-    public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken) =>
-        base.WriteAsync(buffer, offset, count, cancellationToken);
+    public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+    {
+        _callTrackers.TrackCall(buffer, offset, count, cancellationToken);
+        return Task.CompletedTask;
+    }
 
     public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = new ()) =>
         base.WriteAsync(buffer, cancellationToken);
@@ -275,5 +278,11 @@ public sealed class StreamMock : Stream
         var callTracker = _callTrackers.GetRequiredCallTracker<CallTracker<ImmutableArray<byte>>>(WriteSpanName);
         callTracker.CapturedParameters.Should().ContainSingle().Which.Should().Equal(buffer);
         _callTrackers.MustHaveNoOtherCallsExcept(WriteSpanName);
+    }
+
+    public void WriteAsyncMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength, CancellationToken none)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(WriteAsync), buffer, offset, bufferLength, none);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(WriteAsync));
     }
 }

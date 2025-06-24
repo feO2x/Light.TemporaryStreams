@@ -348,4 +348,13 @@ public sealed class TemporaryStreamForwardingTests
 
         _streamMock.WriteMustHaveBeenCalledWith(buffer);
     }
+
+    [Fact]
+    public async Task WriteAsync_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[10];
+        await _temporaryStream.WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
+
+        _streamMock.WriteAsyncMustHaveBeenCalledWith(buffer, 0, buffer.Length, CancellationToken.None);
+    }
 }
