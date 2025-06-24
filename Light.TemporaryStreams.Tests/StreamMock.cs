@@ -12,6 +12,7 @@ public sealed class StreamMock : Stream
 {
     public const int ReadReturnValue = 42;
     private const string ReadSpanName = "Read(Span<byte> buffer)";
+    private const string ReadAsyncMemoryName = "ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)";
     private readonly CallTrackers _callTrackers = new ();
 
     public AsyncResultNullObject AsyncResult { get; } = new ();
@@ -130,8 +131,12 @@ public sealed class StreamMock : Stream
         return Task.FromResult(ReadReturnValue);
     }
 
-    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = new ()) =>
-        base.ReadAsync(buffer, cancellationToken);
+    public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+    {
+        // ReSharper disable once ExplicitCallerInfoArgument -- ReadAsync is already used by another method
+        _callTrackers.TrackCall(buffer, cancellationToken, ReadAsyncMemoryName);
+        return ValueTask.FromResult(ReadReturnValue);
+    }
 
     public override int ReadByte() => base.ReadByte();
 
@@ -221,5 +226,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(ReadAsync), buffer, offset, count, cancellationToken);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(ReadAsync));
+    }
+
+    public void ReadAsyncMustHaveBeenCalledWith(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        _callTrackers.MustHaveBeenCalledWith(ReadAsyncMemoryName, buffer, cancellationToken);
+        _callTrackers.MustHaveNoOtherCallsExcept(ReadAsyncMemoryName);
     }
 }

@@ -287,4 +287,15 @@ public sealed class TemporaryStreamForwardingTests
         result.Should().Be(StreamMock.ReadReturnValue);
         _streamMock.ReadAsyncMustHaveBeenCalledWith(buffer, 0, buffer.Length, CancellationToken.None);
     }
+
+    [Fact]
+    public async Task ReadAsyncMemory_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[3].AsMemory();
+
+        var result = await _temporaryStream.ReadAsync(buffer, CancellationToken.None);
+
+        result.Should().Be(StreamMock.ReadReturnValue);
+        _streamMock.ReadAsyncMustHaveBeenCalledWith(buffer, CancellationToken.None);
+    }
 }
