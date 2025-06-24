@@ -153,7 +153,7 @@ public sealed class StreamMock : Stream
 
     public override void SetLength(long value) => _callTrackers.TrackCall(value);
 
-    public override void Write(byte[] buffer, int offset, int count) => throw new NotImplementedException();
+    public override void Write(byte[] buffer, int offset, int count) => _callTrackers.TrackCall(buffer, offset, count);
 
     public override void Write(ReadOnlySpan<byte> buffer) => base.Write(buffer);
 
@@ -259,5 +259,11 @@ public sealed class StreamMock : Stream
     {
         _callTrackers.MustHaveBeenCalledWith(nameof(SetLength), value);
         _callTrackers.MustHaveNoOtherCallsExcept(nameof(SetLength));
+    }
+
+    public void WriteMustHaveBeenCalledWith(byte[] buffer, int offset, int bufferLength)
+    {
+        _callTrackers.MustHaveBeenCalledWith(nameof(Write), buffer, offset, bufferLength);
+        _callTrackers.MustHaveNoOtherCallsExcept(nameof(Write));
     }
 }

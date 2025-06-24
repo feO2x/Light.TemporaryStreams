@@ -329,4 +329,13 @@ public sealed class TemporaryStreamForwardingTests
 
         _streamMock.SetLengthMustHaveBeenCalledWith(value);
     }
+
+    [Fact]
+    public void Write_MustForwardToUnderlyingStream()
+    {
+        var buffer = new byte[10];
+        _temporaryStream.Write(buffer, 0, buffer.Length);
+
+        _streamMock.WriteMustHaveBeenCalledWith(buffer, 0, buffer.Length);
+    }
 }
