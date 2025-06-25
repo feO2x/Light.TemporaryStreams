@@ -11,13 +11,14 @@ namespace Light.TemporaryStreams;
 /// <summary>
 /// <para>
 /// Represents a stream to a temporary local file. If the file is small enough for the Small Object Heap, it will
-/// be stored in a <see cref="MemoryStream" />, otherwise a local file will be created. You can access the underlying
-/// stream via the <see cref="UnderlyingStream" /> property.
+/// be stored in a <see cref="MemoryStream" />, otherwise a local file will be created. All calls like reading from or
+/// writing to the stream are forwarded to the underlying stream. You can access the underlying stream via the
+/// <see cref="UnderlyingStream" /> property.
 /// </para>
 /// <para>
 /// When the underlying stream is a <see cref="FileStream" />, the temporary file will be deleted when this stream
-/// is disposed of. You can disable this behavior by setting <see cref="IsDeletingFileStreamOnDispose" /> to
-/// <see langword="false" />.
+/// is disposed of. You can change this behavior by providing a different <see cref="TemporaryStreamDisposeBehavior" />
+/// to the constructor.
 /// </para>
 /// <para>
 /// This class is not thread-safe. Only use it in contexts where one thread accesses it at a time or synchronize access
@@ -32,9 +33,9 @@ public class TemporaryStream : Stream
     /// <param name="underlyingStream">
     /// The stream that is encapsulated by this instance. This stream must be seekable.
     /// </param>
-    /// <param name="isDeletingFileStreamOnDispose">
-    /// The value indicating whether the underlying file should be deleted upon disposal. This only applies if the
-    /// <paramref name="underlyingStream" /> is a <see cref="FileStream" />. The default value is true.
+    /// <param name="disposeBehavior">
+    /// The value indicating how the underlying stream and file should be treated during disposal of the temporary
+    /// stream. Defaults to <see cref="TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile" />.
     /// </param>
     /// <param name="onFileDeletionError">
     /// The delegate that is executed when an exception occurs while deleting the underlying file.
@@ -47,17 +48,18 @@ public class TemporaryStream : Stream
     /// </exception>
     public TemporaryStream(
         Stream underlyingStream,
-        bool isDeletingFileStreamOnDispose = true,
+        TemporaryStreamDisposeBehavior disposeBehavior =
+            TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile,
         Action<TemporaryStream, Exception>? onFileDeletionError = null
     )
     {
         UnderlyingStream = underlyingStream.MustNotBeNull();
-        if (!UnderlyingStream.CanSeek)
+        if (!underlyingStream.CanSeek)
         {
             throw new ArgumentException("The underlying stream must be seekable.", nameof(underlyingStream));
         }
 
-        IsDeletingFileStreamOnDispose = isDeletingFileStreamOnDispose;
+        DisposeBehavior = disposeBehavior;
         OnFileDeletionError = onFileDeletionError;
     }
 
@@ -67,10 +69,10 @@ public class TemporaryStream : Stream
     public Stream UnderlyingStream { get; }
 
     /// <summary>
-    /// Gets the value indicating whether the underlying file should be deleted upon disposal. This only applies if
-    /// the <see cref="UnderlyingStream" /> is a <see cref="FileStream" />.
+    /// Gets the value indicating how the underlying stream and file should be treated during disposal of the
+    /// temporary stream.
     /// </summary>
-    public bool IsDeletingFileStreamOnDispose { get; }
+    public TemporaryStreamDisposeBehavior DisposeBehavior { get; }
 
     /// <inheritdoc />
     public override bool CanRead => UnderlyingStream.CanRead;
@@ -205,6 +207,9 @@ public class TemporaryStream : Stream
 
     /// <summary>
     /// Releases all resources used by the current instance of the <see cref="TemporaryStream" /> class.
+    /// If <see cref="DisposeBehavior" /> is set to
+    /// <see cref="TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile" /> and the underlying stream is a
+    /// <see cref="FileStream" />, this method deletes the underlying file after disposing the stream.
     /// </summary>
     /// <param name="disposing">This value is ignored.</param>
     protected override void Dispose(bool disposing)
@@ -214,13 +219,18 @@ public class TemporaryStream : Stream
             return;
         }
 
-        UnderlyingStream.Dispose();
+        if (DisposeBehavior != TemporaryStreamDisposeBehavior.LeaveUnderlyingStreamOpen)
+        {
+            UnderlyingStream.Dispose();
+        }
+
         SetIsDisposedAndDeleteFileIfNecessary();
     }
 
     /// <summary>
     /// Asynchronously releases all resources used by the current instance of the <see cref="TemporaryStream" /> class.
-    /// If <see cref="IsDeletingFileStreamOnDispose" /> is <see langword="true" /> and the underlying stream is a
+    /// If <see cref="DisposeBehavior" /> is set to
+    /// <see cref="TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile" /> and the underlying stream is a
     /// <see cref="FileStream" />, this method deletes the underlying file after disposing the stream.
     /// </summary>
     public override async ValueTask DisposeAsync()
@@ -230,13 +240,18 @@ public class TemporaryStream : Stream
             return;
         }
 
-        await UnderlyingStream.DisposeAsync();
+        if (DisposeBehavior != TemporaryStreamDisposeBehavior.LeaveUnderlyingStreamOpen)
+        {
+            await UnderlyingStream.DisposeAsync();
+        }
+
         SetIsDisposedAndDeleteFileIfNecessary();
     }
 
     private void SetIsDisposedAndDeleteFileIfNecessary()
     {
-        if (IsDeletingFileStreamOnDispose && UnderlyingStream is FileStream fileStream)
+        if (DisposeBehavior == TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile &&
+            UnderlyingStream is FileStream fileStream)
         {
             try
             {

@@ -233,19 +233,53 @@ public static class TemporaryStreamTests
         }
     }
 
+    [Fact]
+    public static void Dispose_ShouldNotDeleteFile_WhenDisposeBehaviorIsCloseUnderlyingStreamOnly()
+    {
+        var (temporaryStream, fileStream) =
+            SetUpTemporaryFileBackedStream(TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly);
+
+        try
+        {
+            temporaryStream.Dispose();
+            fileStream.SafeFileHandle.IsClosed.Should().BeTrue();
+            File.Exists(fileStream.Name).Should().BeTrue();
+        }
+        finally
+        {
+            File.Delete(fileStream.Name);
+        }
+    }
+
+    [Fact]
+    public static void Dispose_ShouldLeaveStreamOpen_WhenDisposeBehaviorIsLeaveStreamOpen()
+    {
+        var (temporaryStream, fileStream) =
+            SetUpTemporaryFileBackedStream(TemporaryStreamDisposeBehavior.LeaveUnderlyingStreamOpen);
+
+        try
+        {
+            temporaryStream.Dispose();
+            fileStream.SafeFileHandle.IsClosed.Should().BeFalse();
+            File.Exists(fileStream.Name).Should().BeTrue();
+        }
+        finally
+        {
+            fileStream.Dispose();
+            File.Delete(fileStream.Name);
+        }
+    }
+
     private static (TemporaryStream temporaryStream, FileStream fileStream) SetUpTemporaryFileBackedStream(
+        TemporaryStreamDisposeBehavior disposeBehavior =
+            TemporaryStreamDisposeBehavior.CloseUnderlyingStreamAndDeleteFile,
         Action<TemporaryStream, Exception>? onFileDeletionError = null
     )
     {
-        var fileStream = GetFileStream();
-        var temporaryStream = new TemporaryStream(fileStream, onFileDeletionError: onFileDeletionError);
-        return (temporaryStream, fileStream);
-    }
-
-    private static FileStream GetFileStream()
-    {
         var temporaryFilePath = Path.GetTempFileName();
-        return File.OpenRead(temporaryFilePath);
+        var fileStream = File.OpenRead(temporaryFilePath);
+        var temporaryStream = new TemporaryStream(fileStream, disposeBehavior, onFileDeletionError);
+        return (temporaryStream, fileStream);
     }
 
     private sealed class TestFileStream : FileStream
