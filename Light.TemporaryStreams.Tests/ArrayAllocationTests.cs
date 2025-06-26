@@ -4,10 +4,18 @@ using Xunit;
 
 namespace Light.TemporaryStreams.Tests;
 
-public static class ArrayAllocationTests
+[Trait("Category", "Triangulation")]
+public sealed class ArrayAllocationTests
 {
+    private readonly ITestOutputHelper _output;
+
+    public ArrayAllocationTests(ITestOutputHelper output)
+    {
+        _output = output;
+    }
+
     [Fact]
-    public static void ByteArray_WithSize84975_AllocatesInSmallObjectHeap()
+    public void ByteArray_WithSize84975_AllocatesInSmallObjectHeap()
     {
         const int sohArraySize = 84_975;
         var result = GC.TryStartNoGCRegion(100_000, disallowFullBlockingGC: true);
@@ -21,12 +29,24 @@ public static class ArrayAllocationTests
         }
         finally
         {
-            GC.EndNoGCRegion();
+            // When an exception occurs within a No-GC region, the region is immediately ended.
+            // This is why we wrap GC.EndNoGCRegion() in a dedicated try-catch block to avoid
+            // that an exception thrown during GC.EndNoGCRegion() hides an exception from the assertion
+            // in the try block.
+            try
+            {
+                GC.EndNoGCRegion();
+            }
+            catch (Exception ex)
+            {
+                _output.WriteLine("Caught exception during GC.EndNoGCRegion");
+                _output.WriteLine(ex.ToString());
+            }
         }
     }
 
     [Fact]
-    public static void ByteArray_WithSize85000_AllocatesInLargeObjectHeap()
+    public void ByteArray_WithSize85000_AllocatesInLargeObjectHeap()
     {
         const int lohArraySize = 84_976;
 
@@ -41,7 +61,18 @@ public static class ArrayAllocationTests
         }
         finally
         {
-            GC.EndNoGCRegion();
+            try
+            {
+                GC.EndNoGCRegion();
+            }
+            catch (Exception ex)
+            {
+                _output.WriteLine("Caught exception during GC.EndNoGCRegion");
+                _output.WriteLine(ex.ToString());
+            }
         }
     }
+
+    [Fact]
+    public static void ArrayMaxLength_IsLessThanInt32MaxValue() => Array.MaxLength.Should().BeLessThan(int.MaxValue);
 }
