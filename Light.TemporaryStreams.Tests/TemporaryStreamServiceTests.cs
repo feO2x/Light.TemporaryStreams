@@ -107,7 +107,9 @@ public static class TemporaryStreamServiceTests
         finally
         {
             if (File.Exists(customFilePath))
+            {
                 File.Delete(customFilePath);
+            }
         }
     }
 
@@ -116,8 +118,8 @@ public static class TemporaryStreamServiceTests
     {
         var defaultOptions = new TemporaryStreamServiceOptions { FileThresholdInBytes = 1000 };
         var service = CreateService(defaultOptions);
-        var overrideOptions = new TemporaryStreamServiceOptions 
-        { 
+        var overrideOptions = new TemporaryStreamServiceOptions
+        {
             FileThresholdInBytes = 500,
             DisposeBehavior = TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly
         };
@@ -151,7 +153,7 @@ public static class TemporaryStreamServiceTests
         using var result = service.CreateTemporaryStream(expectedLength);
 
         result.UnderlyingStream.Should().BeOfType<MemoryStream>();
-        var memoryStream = (MemoryStream)result.UnderlyingStream;
+        var memoryStream = (MemoryStream) result.UnderlyingStream;
         memoryStream.Capacity.Should().Be(expectedLength);
     }
 
@@ -209,8 +211,8 @@ public static class TemporaryStreamServiceTests
             BufferSize = 4096,
             Options = FileOptions.None
         };
-        var options = new TemporaryStreamServiceOptions 
-        { 
+        var options = new TemporaryStreamServiceOptions
+        {
             FileStreamOptions = customFileStreamOptions,
             FileThresholdInBytes = 1000
         };
@@ -219,10 +221,45 @@ public static class TemporaryStreamServiceTests
         using var result = service.CreateTemporaryStream(2000);
 
         result.IsFileBased.Should().BeTrue();
-        var fileStream = (FileStream)result.UnderlyingStream;
+        var fileStream = (FileStream) result.UnderlyingStream;
         // Verify the file stream was created with the custom options
         fileStream.CanRead.Should().BeTrue();
         fileStream.CanWrite.Should().BeTrue();
+    }
+
+    [Fact]
+    public static void CreateTemporaryStream_ShouldOpenExistingFile_WhenFilePathAndOptionsAreProvided()
+    {
+        var customFilePath = Path.GetTempFileName();
+        try
+        {
+            var customFileStreamOptions = new FileStreamOptions
+            {
+                Mode = FileMode.Open,
+                Access = FileAccess.ReadWrite,
+                Share = FileShare.Read,
+                BufferSize = 4096,
+                Options = FileOptions.None
+            };
+            var options = new TemporaryStreamServiceOptions
+            {
+                FileStreamOptions = customFileStreamOptions,
+                FileThresholdInBytes = 0
+            };
+            var service = CreateService(options);
+
+            using var temporaryStream = service.CreateTemporaryStream(0, customFilePath);
+
+            temporaryStream.IsFileBased.Should().BeTrue();
+            ((FileStream) temporaryStream.UnderlyingStream).Name.Should().Be(customFilePath);
+        }
+        finally
+        {
+            if (File.Exists(customFilePath))
+            {
+                File.Delete(customFilePath);
+            }
+        }
     }
 
     private static TemporaryStreamService CreateDefaultService()
@@ -232,7 +269,8 @@ public static class TemporaryStreamServiceTests
 
     private static TemporaryStreamService CreateService(
         TemporaryStreamServiceOptions? options = null,
-        TemporaryStreamErrorHandlerProvider? errorHandlerProvider = null)
+        TemporaryStreamErrorHandlerProvider? errorHandlerProvider = null
+    )
     {
         options ??= new TemporaryStreamServiceOptions();
         errorHandlerProvider ??= new TemporaryStreamErrorHandlerProvider(null);
