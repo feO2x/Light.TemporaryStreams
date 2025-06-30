@@ -21,4 +21,4 @@ jobs:
       - name: Build
         run: dotnet build ./Light.TemporaryStreams.sln --configuration Release --no-restore
       - name: Test
-        run: dotnet test ./Light.TemporaryStreams.sln --no-build --no-restore --verbosity normal
+        run: dotnet test ./Light.TemporaryStreams.sln --configuration Release --no-build --no-restore --verbosity normal
