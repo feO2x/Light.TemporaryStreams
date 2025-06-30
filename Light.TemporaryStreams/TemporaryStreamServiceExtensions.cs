@@ -121,30 +121,30 @@ public static class TemporaryStreamServiceExtensions
         Stream outermostStream = temporaryStream;
         try
         {
-            foreach (var plugin in plugins)
+            for (var i = 0; i < plugins.Length; i++)
             {
-                await plugin.SetUpAsync(outermostStream, cancellationToken).ConfigureAwait(false);
+                outermostStream = await plugins[i].SetUpAsync(source, cancellationToken).ConfigureAwait(false);
             }
 
             if (copyBufferSize.HasValue)
             {
                 await source
-                   .CopyToAsync(temporaryStream, copyBufferSize.Value, cancellationToken)
+                   .CopyToAsync(outermostStream, copyBufferSize.Value, cancellationToken)
                    .ConfigureAwait(false);
             }
             else
             {
-                await source.CopyToAsync(temporaryStream, cancellationToken).ConfigureAwait(false);
+                await source.CopyToAsync(outermostStream, cancellationToken).ConfigureAwait(false);
             }
 
             for (var i = plugins.Length - 1; i >= 0; i--)
             {
-                await plugins[i].AfterCopyAsync(cancellationToken);
+                await plugins[i].AfterCopyAsync(cancellationToken).ConfigureAwait(false);
             }
         }
         catch
         {
-            await temporaryStream.DisposeAsync();
+            await temporaryStream.DisposeAsync().ConfigureAwait(false);
             throw;
         }
 
