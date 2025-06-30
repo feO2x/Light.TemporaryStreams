@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Light.GuardClauses" Version="13.0.0" />
+    <PackageReference Include="Light.GuardClauses" />
   </ItemGroup>
 
 </Project>
