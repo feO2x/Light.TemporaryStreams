@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Light.TemporaryStreams\Light.TemporaryStreams.csproj" />
+    <ProjectReference Include="..\..\src\Light.TemporaryStreams\Light.TemporaryStreams.csproj" />
   </ItemGroup>
 
   <ItemGroup>
