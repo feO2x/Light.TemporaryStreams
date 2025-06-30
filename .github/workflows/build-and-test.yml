@@ -24,8 +24,8 @@ jobs:
           restore-keys: |
             nuget-${{ runner.os }}-
       - name: Restore dependencies
-        run: dotnet restore ./Light.TemporaryStreams.sln
+        run: dotnet restore ./Light.TemporaryStreams.sln /p:ContinuousIntegrationBuild=true
       - name: Build
-        run: dotnet build ./Light.TemporaryStreams.sln --configuration Release --no-restore
+        run: dotnet build ./Light.TemporaryStreams.sln --configuration Release --no-restore /p:ContinuousIntegrationBuild=true
       - name: Test
-        run: dotnet test ./Light.TemporaryStreams.sln --configuration Release --no-build --no-restore --verbosity normal
+        run: dotnet test ./Light.TemporaryStreams.sln --configuration Release --no-build --verbosity normal
