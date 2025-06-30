@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
@@ -55,26 +56,26 @@ public static class TemporaryStreamServiceTests
         var options = new TemporaryStreamServiceOptions { FileThresholdInBytes = 1000 };
         var service = CreateService(options);
 
-        using var result = service.CreateTemporaryStream(500);
+        using var temporaryStream = service.CreateTemporaryStream(500);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeFalse();
-        result.UnderlyingStream.Should().BeOfType<MemoryStream>();
-        result.DisposeBehavior.Should().Be(options.DisposeBehavior);
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeFalse();
+        temporaryStream.UnderlyingStream.Should().BeOfType<MemoryStream>();
+        temporaryStream.DisposeBehavior.Should().Be(options.DisposeBehavior);
     }
 
     [Fact]
-    public static void CreateTemporaryStream_ShouldCreateFileStream_WhenExpectedLengthIsAboveThreshold()
+    public static async Task CreateTemporaryStream_ShouldCreateFileStream_WhenExpectedLengthIsAboveThreshold()
     {
         var options = new TemporaryStreamServiceOptions { FileThresholdInBytes = 1000 };
         var service = CreateService(options);
 
-        using var result = service.CreateTemporaryStream(1500);
+        await using var temporaryStream = service.CreateTemporaryStream(1500);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeTrue();
-        result.UnderlyingStream.Should().BeOfType<FileStream>();
-        result.DisposeBehavior.Should().Be(options.DisposeBehavior);
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeTrue();
+        temporaryStream.UnderlyingStream.Should().BeOfType<FileStream>();
+        temporaryStream.DisposeBehavior.Should().Be(options.DisposeBehavior);
     }
 
     [Fact]
@@ -83,11 +84,11 @@ public static class TemporaryStreamServiceTests
         var options = new TemporaryStreamServiceOptions { FileThresholdInBytes = 1000 };
         var service = CreateService(options);
 
-        using var result = service.CreateTemporaryStream(1000);
+        using var temporaryStream = service.CreateTemporaryStream(1000);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeTrue();
-        result.UnderlyingStream.Should().BeOfType<FileStream>();
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeTrue();
+        temporaryStream.UnderlyingStream.Should().BeOfType<FileStream>();
     }
 
     [Fact]
@@ -98,11 +99,11 @@ public static class TemporaryStreamServiceTests
 
         try
         {
-            using var result = service.CreateTemporaryStream(100000, customFilePath);
+            using var temporaryStream = service.CreateTemporaryStream(100000, customFilePath);
 
-            result.Should().NotBeNull();
-            result.IsFileBased.Should().BeTrue();
-            result.GetUnderlyingFilePath().Should().Be(customFilePath);
+            temporaryStream.Should().NotBeNull();
+            temporaryStream.IsFileBased.Should().BeTrue();
+            temporaryStream.GetUnderlyingFilePath().Should().Be(customFilePath);
         }
         finally
         {
@@ -124,11 +125,18 @@ public static class TemporaryStreamServiceTests
             DisposeBehavior = TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly
         };
 
-        using var result = service.CreateTemporaryStream(750, options: overrideOptions);
+        using var temporaryStream = service.CreateTemporaryStream(750, options: overrideOptions);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeTrue(); // 750 > 500 (override threshold)
-        result.DisposeBehavior.Should().Be(TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly);
+        try
+        {
+            temporaryStream.Should().NotBeNull();
+            temporaryStream.IsFileBased.Should().BeTrue(); // 750 > 500 (override threshold)
+            temporaryStream.DisposeBehavior.Should().Be(TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly);
+        }
+        finally
+        {
+            File.Delete(temporaryStream.GetUnderlyingFilePath());
+        }
     }
 
     [Fact]
@@ -137,11 +145,11 @@ public static class TemporaryStreamServiceTests
         var defaultOptions = new TemporaryStreamServiceOptions { FileThresholdInBytes = 1000 };
         var service = CreateService(defaultOptions);
 
-        using var result = service.CreateTemporaryStream(500);
+        using var temporaryStream = service.CreateTemporaryStream(500);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeFalse(); // 500 < 1000 (default threshold)
-        result.DisposeBehavior.Should().Be(defaultOptions.DisposeBehavior);
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeFalse(); // 500 < 1000 (default threshold)
+        temporaryStream.DisposeBehavior.Should().Be(defaultOptions.DisposeBehavior);
     }
 
     [Fact]
@@ -150,10 +158,10 @@ public static class TemporaryStreamServiceTests
         var service = CreateDefaultService();
         const int expectedLength = 1024;
 
-        using var result = service.CreateTemporaryStream(expectedLength);
+        using var temporaryStream = service.CreateTemporaryStream(expectedLength);
 
-        result.UnderlyingStream.Should().BeOfType<MemoryStream>();
-        var memoryStream = (MemoryStream) result.UnderlyingStream;
+        temporaryStream.UnderlyingStream.Should().BeOfType<MemoryStream>();
+        var memoryStream = (MemoryStream) temporaryStream.UnderlyingStream;
         memoryStream.Capacity.Should().Be(expectedLength);
     }
 
@@ -164,11 +172,11 @@ public static class TemporaryStreamServiceTests
         var errorHandlerProvider = new TemporaryStreamErrorHandlerProvider(errorHandler);
         var service = CreateService(errorHandlerProvider: errorHandlerProvider);
 
-        using var result = service.CreateTemporaryStream(100000);
+        using var temporaryStream = service.CreateTemporaryStream(100000);
 
-        result.Should().NotBeNull();
-        result.IsFileBased.Should().BeTrue();
-        result.OnFileDeletionError.Should().BeSameAs(errorHandler);
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeTrue();
+        temporaryStream.OnFileDeletionError.Should().BeSameAs(errorHandler);
     }
 
     [Theory]
@@ -180,10 +188,10 @@ public static class TemporaryStreamServiceTests
     {
         var service = CreateDefaultService();
 
-        using var result = service.CreateTemporaryStream(expectedLength);
+        using var temporaryStream = service.CreateTemporaryStream(expectedLength);
 
-        result.IsFileBased.Should().BeFalse();
-        result.UnderlyingStream.Should().BeOfType<MemoryStream>();
+        temporaryStream.IsFileBased.Should().BeFalse();
+        temporaryStream.UnderlyingStream.Should().BeOfType<MemoryStream>();
     }
 
     [Theory]
@@ -194,10 +202,10 @@ public static class TemporaryStreamServiceTests
     {
         var service = CreateDefaultService();
 
-        using var result = service.CreateTemporaryStream(expectedLength);
+        using var temporaryStream = service.CreateTemporaryStream(expectedLength);
 
-        result.IsFileBased.Should().BeTrue();
-        result.UnderlyingStream.Should().BeOfType<FileStream>();
+        temporaryStream.IsFileBased.Should().BeTrue();
+        temporaryStream.UnderlyingStream.Should().BeOfType<FileStream>();
     }
 
     [Fact]
@@ -218,10 +226,10 @@ public static class TemporaryStreamServiceTests
         };
         var service = CreateService(options);
 
-        using var result = service.CreateTemporaryStream(2000);
+        using var temporaryStream = service.CreateTemporaryStream(2000);
 
-        result.IsFileBased.Should().BeTrue();
-        var fileStream = (FileStream) result.UnderlyingStream;
+        temporaryStream.IsFileBased.Should().BeTrue();
+        var fileStream = (FileStream) temporaryStream.UnderlyingStream;
         // Verify the file stream was created with the custom options
         fileStream.CanRead.Should().BeTrue();
         fileStream.CanWrite.Should().BeTrue();
