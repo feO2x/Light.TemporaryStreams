@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace Light.TemporaryStreams.Tests;
+namespace Light.TemporaryStreams;
 
 public sealed class AsyncResultNullObject : IAsyncResult
 {

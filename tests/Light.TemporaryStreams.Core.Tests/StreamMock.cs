@@ -4,9 +4,9 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Light.TemporaryStreams.Tests.CallTracking;
+using Light.TemporaryStreams.CallTracking;
 
-namespace Light.TemporaryStreams.Tests;
+namespace Light.TemporaryStreams;
 
 public sealed class StreamMock : Stream
 {

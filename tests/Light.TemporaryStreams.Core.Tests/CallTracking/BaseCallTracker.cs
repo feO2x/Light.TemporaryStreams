@@ -1,4 +1,4 @@
-namespace Light.TemporaryStreams.Tests.CallTracking;
+namespace Light.TemporaryStreams.CallTracking;
 
 public abstract class BaseCallTracker
 {
