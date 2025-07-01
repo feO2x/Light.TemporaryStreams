@@ -4,10 +4,10 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Light.TemporaryStreams.Tests.CallTracking;
+using Light.TemporaryStreams.CallTracking;
 using Xunit;
 
-namespace Light.TemporaryStreams.Tests;
+namespace Light.TemporaryStreams;
 
 public static class TemporaryStreamTests
 {

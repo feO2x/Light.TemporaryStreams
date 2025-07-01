@@ -2,7 +2,7 @@ using System;
 using FluentAssertions;
 using Xunit;
 
-namespace Light.TemporaryStreams.Tests;
+namespace Light.TemporaryStreams;
 
 [Trait("Category", "Triangulation")]
 public sealed class ArrayAllocationTests

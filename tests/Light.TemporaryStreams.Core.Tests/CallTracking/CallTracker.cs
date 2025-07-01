@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FluentAssertions;
 
-namespace Light.TemporaryStreams.Tests.CallTracking;
+namespace Light.TemporaryStreams.CallTracking;
 
 public sealed class CallTracker : BaseCallTracker, ICallTracker
 {

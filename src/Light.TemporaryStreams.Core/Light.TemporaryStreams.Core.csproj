@@ -3,6 +3,7 @@
   <PropertyGroup>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <IsAotCompatible>true</IsAotCompatible>
+    <RootNamespace>Light.TemporaryStreams</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

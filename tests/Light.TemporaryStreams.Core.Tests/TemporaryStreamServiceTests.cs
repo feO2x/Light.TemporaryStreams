@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 
-namespace Light.TemporaryStreams.Tests;
+namespace Light.TemporaryStreams;
 
 public static class TemporaryStreamServiceTests
 {

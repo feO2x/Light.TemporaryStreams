@@ -6,7 +6,7 @@ using FluentAssertions;
 using Light.GuardClauses;
 using Xunit.Sdk;
 
-namespace Light.TemporaryStreams.Tests.CallTracking;
+namespace Light.TemporaryStreams.CallTracking;
 
 public sealed class CallTrackers
 {
