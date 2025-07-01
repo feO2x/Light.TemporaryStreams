@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="less-than-80KB.pdf" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="more-than-80KB.pdf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
