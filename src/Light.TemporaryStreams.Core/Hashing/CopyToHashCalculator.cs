@@ -22,15 +22,11 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
     /// <param name="hashAlgorithm">The hash algorithm to use.</param>
     /// <param name="conversionMethod">The enum value identifying how hash byte arrays are converted to strings.</param>
     /// <param name="name">A name that uniquely identifies the hash algorithm.</param>
-    public CopyToHashCalculator(
-        HashAlgorithm hashAlgorithm,
-        HashConversionMethod conversionMethod,
-        string? name = null
-    )
+    public CopyToHashCalculator(HashAlgorithm hashAlgorithm, HashConversionMethod conversionMethod, string? name = null)
     {
         HashAlgorithm = hashAlgorithm.MustNotBeNull();
         ConversionMethod = conversionMethod.MustBeValidEnumValue();
-        Name = name ?? hashAlgorithm.GetType().Name;
+        Name = name ?? DetermineDefaultName(hashAlgorithm);
     }
 
     /// <summary>
@@ -54,12 +50,21 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="ObtainHashFromAlgorithm" /> has not been called yet.
     /// </exception>
-    public string Hash =>
-        _hash.MustNotBeNull(
-            () => new InvalidOperationException(
-                $"ObtainHashFromAlgorithm must be called before accessing the {nameof(Hash)} property."
-            )
-        );
+    public string Hash
+    {
+        get
+        {
+            var hash = _hash;
+            if (hash is null)
+            {
+                throw new InvalidOperationException(
+                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(Hash)} property."
+                );
+            }
+
+            return hash;
+        }
+    }
 
     /// <summary>
     /// The calculated hash in byte array representation.
@@ -67,12 +72,21 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
     /// <exception cref="InvalidOperationException">
     /// Thrown when <see cref="ObtainHashFromAlgorithm" /> has not been called yet.
     /// </exception>
-    public byte[] HashArray =>
-        _hashArray.MustNotBeNull(
-            () => new InvalidOperationException(
-                $"ObtainHashFromAlgorithm must be called before accessing the {nameof(HashArray)} property."
-            )
-        );
+    public byte[] HashArray
+    {
+        get
+        {
+            var hashArray = _hashArray;
+            if (hashArray is null)
+            {
+                throw new InvalidOperationException(
+                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(HashArray)} property."
+                );
+            }
+
+            return hashArray;
+        }
+    }
 
     /// <summary>
     /// Asynchronously disposes the resources used by the current instance, including the CryptoStream and the hash algorithm.
@@ -88,6 +102,23 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
         }
 
         HashAlgorithm.Dispose();
+    }
+
+    private static string DetermineDefaultName(HashAlgorithm hashAlgorithm)
+    {
+        /* Some of the .NET hash algorithms (like .SHA1, MD5) are actually just abstract base classes. They have a
+         * nested type called implementation which can be instantiated, but this type is not publicly visible. GetType()
+         * will likely return the implementation type, which is not what we want as callers would want the name of the
+         * base type instead. This is why we check the name of the type for ".Implementation" and if found, we return
+         * the name of the base type instead.
+         *
+         * Other types like HMACSHA256 are public non-abstract types and can be used as expected. */
+        var type = hashAlgorithm.GetType();
+        var name = type.Name;
+        var baseTypeName = type.BaseType?.Name;
+        return name.Equals("Implementation", StringComparison.Ordinal) && !baseTypeName.IsNullOrWhiteSpace() ?
+            baseTypeName :
+            name;
     }
 
     /// <summary>
@@ -131,17 +162,8 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
                     )
                 );
 
-        _hash = ConvertHashToString(_hashArray);
+        _hash = HashConverter.ConvertHashToString(_hashArray, ConversionMethod);
     }
-
-    private string ConvertHashToString(byte[] hashArray) =>
-        ConversionMethod switch
-        {
-            HashConversionMethod.Base64 => Convert.ToBase64String(hashArray),
-            HashConversionMethod.UpperHexadecimal => Convert.ToHexString(hashArray),
-            HashConversionMethod.None => "",
-            _ => throw new InvalidDataException($"{nameof(ConversionMethod)} has an invalid value")
-        };
 
     /// <summary>
     /// Converts a <see cref="HashAlgorithm" /> to a <see cref="CopyToHashCalculator" /> using the default settings

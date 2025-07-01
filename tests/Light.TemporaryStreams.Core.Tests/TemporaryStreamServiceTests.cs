@@ -127,16 +127,9 @@ public static class TemporaryStreamServiceTests
 
         using var temporaryStream = service.CreateTemporaryStream(750, options: overrideOptions);
 
-        try
-        {
-            temporaryStream.Should().NotBeNull();
-            temporaryStream.IsFileBased.Should().BeTrue(); // 750 > 500 (override threshold)
-            temporaryStream.DisposeBehavior.Should().Be(TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly);
-        }
-        finally
-        {
-            File.Delete(temporaryStream.GetUnderlyingFilePath());
-        }
+        temporaryStream.Should().NotBeNull();
+        temporaryStream.IsFileBased.Should().BeTrue(); // 750 > 500 (override threshold)
+        temporaryStream.DisposeBehavior.Should().Be(TemporaryStreamDisposeBehavior.CloseUnderlyingStreamOnly);
     }
 
     [Fact]
