@@ -6,8 +6,10 @@ using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using FluentAssertions;
+using Light.GuardClauses.Exceptions;
 using Light.TemporaryStreams.Hashing;
 using Xunit;
+using XunitException = Xunit.Sdk.XunitException;
 
 namespace Light.TemporaryStreams;
 
@@ -57,6 +59,29 @@ public static class CopyToTemporaryStreamTests
             temporaryStream,
             sourceData,
             expectFileBased: true,
+            cancellationToken
+        );
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_ShouldForwardBufferSize()
+    {
+        // Arrange
+        var (service, sourceData, sourceStream) = CreateTestSetup(40_000);
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Act
+        await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            copyBufferSize: 24 * 1024,
+            cancellationToken: cancellationToken
+        );
+
+        // Assert
+        await AssertTemporaryStreamContentsMatchAsync(
+            temporaryStream,
+            sourceData,
+            expectFileBased: false,
             cancellationToken
         );
     }
@@ -133,6 +158,23 @@ public static class CopyToTemporaryStreamTests
             expectFileBased: true,
             cancellationToken
         );
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_ShouldDisposeTemporaryStream_WhenAnExceptionIsThrown()
+    {
+        // Arrange
+        var (service, sourceData, sourceStream) = CreateTestSetup(100_000, useErroneousSourceStream: true);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        var serviceSpy = new TemporaryStreamServiceSpy(service);
+
+        // Act
+        var act = () => serviceSpy.CopyToTemporaryStreamAsync(sourceStream, cancellationToken: cancellationToken);
+
+        // Assert
+        (await act.Should().ThrowAsync<XunitException>())
+           .Which.Message.Should().Be("Intentional exception to test error handling");
+        serviceSpy.CapturedTemporaryStream.IsDisposed.Should().BeTrue();
     }
 
     [Theory]
@@ -238,7 +280,6 @@ public static class CopyToTemporaryStreamTests
         var cancellationToken = TestContext.Current.CancellationToken;
         await using var hashingPlugin = new HashingPlugin([SHA1.Create()]);
 
-
         // Act
         await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
             sourceStream,
@@ -276,6 +317,34 @@ public static class CopyToTemporaryStreamTests
         temporaryStream.Length.Should().Be(sourceData.Length);
         temporaryStream.GetUnderlyingFilePath().Should().Be(filePath);
         hashingPlugin.GetHash(nameof(SHA1)).Should().Be(Convert.ToBase64String(SHA1.HashData(sourceData)));
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_ShouldThrow_WhenPluginArrayIsEmpty()
+    {
+        var (service, _, sourceStream) = CreateTestSetup(10);
+
+        var act = () => service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            ImmutableArray<ICopyToTemporaryStreamPlugin>.Empty
+        );
+
+        (await act.Should().ThrowAsync<EmptyCollectionException>())
+           .Which.ParamName.Should().Be("plugins");
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_ShouldThrow_WhenPluginArrayIsDefaultInstance()
+    {
+        var (service, _, sourceStream) = CreateTestSetup(10);
+
+        var act = () => service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            plugins: default
+        );
+
+        (await act.Should().ThrowAsync<EmptyCollectionException>())
+           .Which.ParamName.Should().Be("plugins");
     }
 
     [Fact]
@@ -341,20 +410,41 @@ public static class CopyToTemporaryStreamTests
             cancellationToken: cancellationToken
         );
 
-
         // Assert
         var hashArray = hashPlugin.GetHashArray(nameof(SHA256));
         var expectedHash = SHA256.HashData(sourceData);
         hashArray.Should().Equal(expectedHash);
     }
 
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_WithHashingPlugin_ShouldDisposeTemporaryStreamDuringException()
+    {
+        // Arrange
+        var (service, _, sourceStream) = CreateTestSetup(20_000);
+        var serviceSpy = new TemporaryStreamServiceSpy(service);
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        // Act
+        var act = () => serviceSpy.CopyToTemporaryStreamAsync(
+            sourceStream,
+            [new ErroneousPlugin()],
+            cancellationToken: cancellationToken
+        );
+
+        // Assert
+        (await act.Should().ThrowAsync<XunitException>())
+           .Which.Message.Should().Be("Intentional exception to test error handling");
+        serviceSpy.CapturedTemporaryStream.IsDisposed.Should().BeTrue();
+    }
+
     private static (TemporaryStreamService service, byte[] sourceData, MemoryStream sourceStream) CreateTestSetup(
-        int dataSize
+        int dataSize,
+        bool useErroneousSourceStream = false
     )
     {
         var service = CreateDefaultService();
         var sourceData = CreateTestData(dataSize);
-        var sourceStream = new MemoryStream(sourceData);
+        var sourceStream = useErroneousSourceStream ? new ErroneousMemoryStream() : new MemoryStream(sourceData);
 
         return (service, sourceData, sourceStream);
     }
@@ -390,5 +480,48 @@ public static class CopyToTemporaryStreamTests
         var random = new Random(42); // Fixed seed for reproducible tests
         random.NextBytes(data);
         return data;
+    }
+
+    private sealed class ErroneousPlugin : ICopyToTemporaryStreamPlugin
+    {
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+
+        public ValueTask<Stream> SetUpAsync(Stream innerStream, CancellationToken cancellationToken = default) =>
+            new (innerStream);
+
+        public ValueTask AfterCopyAsync(CancellationToken cancellationToken = default)
+        {
+            throw new XunitException("Intentional exception to test error handling");
+        }
+    }
+
+    private sealed class TemporaryStreamServiceSpy : ITemporaryStreamService
+    {
+        private readonly ITemporaryStreamService _wrappedService;
+        private TemporaryStream? _capturedTemporaryStream;
+
+        public TemporaryStreamServiceSpy(ITemporaryStreamService wrappedService) => _wrappedService = wrappedService;
+
+        public TemporaryStream CapturedTemporaryStream =>
+            _capturedTemporaryStream ?? throw new InvalidOperationException("No temporary stream captured");
+
+        public TemporaryStream CreateTemporaryStream(
+            long expectedLengthInBytes,
+            string? filePath = null,
+            TemporaryStreamServiceOptions? options = null
+        )
+        {
+            var temporaryStream = _wrappedService.CreateTemporaryStream(expectedLengthInBytes, filePath, options);
+            _capturedTemporaryStream = temporaryStream;
+            return temporaryStream;
+        }
+    }
+
+    private sealed class ErroneousMemoryStream : MemoryStream
+    {
+        public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
+        {
+            throw new XunitException("Intentional exception to test error handling");
+        }
     }
 }
