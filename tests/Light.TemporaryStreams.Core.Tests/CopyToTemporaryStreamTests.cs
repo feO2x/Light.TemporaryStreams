@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
 using System.Security.Cryptography;
@@ -144,15 +145,13 @@ public static class CopyToTemporaryStreamTests
         // Arrange
         var (service, sourceData, sourceStream) = CreateTestSetup(40_000); // Less than 80KB threshold
         var cancellationToken = TestContext.Current.CancellationToken;
-        var (hashingPlugin, expectedHash) = CreateHashingPluginWithExpectedHash(
-            sourceData,
-            new CopyToHashCalculator(SHA1.Create(), hashConversionMethod)
-        );
+        await using var hashingPlugin =
+            new HashingPlugin([new CopyToHashCalculator(SHA1.Create(), hashConversionMethod)]);
 
         // Act
         await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
             sourceStream,
-            ImmutableArray.Create<ICopyToTemporaryStreamPlugin>(hashingPlugin),
+            [hashingPlugin],
             cancellationToken: cancellationToken
         );
 
@@ -163,7 +162,7 @@ public static class CopyToTemporaryStreamTests
             expectFileBased: false,
             cancellationToken
         );
-        hashingPlugin.GetHash(nameof(SHA1)).Should().Be(expectedHash);
+        hashingPlugin.GetHashArray(nameof(SHA1)).Should().Equal(SHA1.HashData(sourceData));
     }
 
     [Theory]
@@ -176,10 +175,8 @@ public static class CopyToTemporaryStreamTests
         // Arrange
         var (service, sourceData, sourceStream) = CreateTestSetup(100_000); // More than 80KB threshold
         var cancellationToken = TestContext.Current.CancellationToken;
-        var (hashingPlugin, expectedHash) = CreateHashingPluginWithExpectedHash(
-            sourceData,
-            new CopyToHashCalculator(MD5.Create(), hashConversionMethod)
-        );
+        await using var hashingPlugin =
+            new HashingPlugin([new CopyToHashCalculator(MD5.Create(), hashConversionMethod)]);
 
         // Act
         await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
@@ -195,7 +192,9 @@ public static class CopyToTemporaryStreamTests
             expectFileBased: true,
             cancellationToken
         );
-        hashingPlugin.GetHash(nameof(MD5)).Should().Be(expectedHash);
+        hashingPlugin.GetHash(nameof(MD5)).Should().Be(
+            HashConverter.ConvertHashToString(MD5.HashData(sourceData), hashConversionMethod)
+        );
     }
 
     [Fact]
@@ -237,15 +236,13 @@ public static class CopyToTemporaryStreamTests
         // Arrange
         var (service, sourceData, sourceStream) = CreateTestSetup(60_000);
         var cancellationToken = TestContext.Current.CancellationToken;
-        var (hashingPlugin, expectedHash) = CreateHashingPluginWithExpectedHash(
-            sourceData,
-            new CopyToHashCalculator(SHA1.Create(), HashConversionMethod.Base64)
-        );
+        await using var hashingPlugin = new HashingPlugin([SHA1.Create()]);
+
 
         // Act
         await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
             sourceStream,
-            ImmutableArray.Create<ICopyToTemporaryStreamPlugin>(hashingPlugin),
+            [hashingPlugin],
             copyBufferSize: 4096,
             cancellationToken: cancellationToken
         );
@@ -253,7 +250,7 @@ public static class CopyToTemporaryStreamTests
         // Assert
         temporaryStream.Should().NotBeNull();
         temporaryStream.Length.Should().Be(sourceData.Length);
-        hashingPlugin.GetHash(nameof(SHA1)).Should().Be(expectedHash);
+        hashingPlugin.GetHash(nameof(SHA1)).Should().Be(Convert.ToBase64String(SHA1.HashData(sourceData)));
     }
 
     [Fact]
@@ -262,10 +259,7 @@ public static class CopyToTemporaryStreamTests
         // Arrange
         var (service, sourceData, sourceStream) = CreateTestSetup(100_000);
         var cancellationToken = TestContext.Current.CancellationToken;
-        var (hashingPlugin, expectedHash) = CreateHashingPluginWithExpectedHash(
-            sourceData,
-            new CopyToHashCalculator(SHA1.Create(), HashConversionMethod.Base64)
-        );
+        await using var hashingPlugin = new HashingPlugin([SHA1.Create()]);
         var filePath = Path.GetFullPath("test.txt");
 
         // Act
@@ -281,7 +275,77 @@ public static class CopyToTemporaryStreamTests
         temporaryStream.IsFileBased.Should().BeTrue();
         temporaryStream.Length.Should().Be(sourceData.Length);
         temporaryStream.GetUnderlyingFilePath().Should().Be(filePath);
-        hashingPlugin.GetHash(nameof(SHA1)).Should().Be(expectedHash);
+        hashingPlugin.GetHash(nameof(SHA1)).Should().Be(Convert.ToBase64String(SHA1.HashData(sourceData)));
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_WithHashingPlugin_ShouldThrowWhenHashNotFound()
+    {
+        // Arrange
+        var (service, _, sourceStream) = CreateTestSetup(20_000);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var hashPlugin = new HashingPlugin([SHA1.Create()]);
+
+        // Act
+        await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            [hashPlugin],
+            cancellationToken: cancellationToken
+        );
+        // ReSharper disable once AccessToDisposedClosure -- delegate called before hashPlugin is disposed of
+        var act = () => hashPlugin.GetHash(nameof(SHA256));
+
+        // Arrange
+        act.Should()
+           .Throw<KeyNotFoundException>()
+           .Where(x => x.Message.StartsWith("There is no hash calculator with the name 'SHA256'"));
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_WithHashingPlugin_ShouldThrowWhenHashArrayNotFound()
+    {
+        // Arrange
+        var (service, _, sourceStream) = CreateTestSetup(20_000);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var hashPlugin =
+            new HashingPlugin([new CopyToHashCalculator(SHA256.Create(), HashConversionMethod.None)]);
+
+        // Act
+        await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            [hashPlugin],
+            cancellationToken: cancellationToken
+        );
+        // ReSharper disable once AccessToDisposedClosure -- delegate called before hashPlugin is disposed of
+        var act = () => hashPlugin.GetHashArray(nameof(SHA3_512));
+
+        // Arrange
+        act.Should()
+           .Throw<KeyNotFoundException>()
+           .Where(x => x.Message.StartsWith("There is no hash calculator with the name 'SHA3_512'"));
+    }
+
+    [Fact]
+    public static async Task CopyToTemporaryStreamAsync_WithHashingPlugin_ShouldReturnHashArray()
+    {
+        // Arrange
+        var (service, sourceData, sourceStream) = CreateTestSetup(20_000);
+        var cancellationToken = TestContext.Current.CancellationToken;
+        await using var hashPlugin =
+            new HashingPlugin([new CopyToHashCalculator(SHA256.Create(), HashConversionMethod.None)]);
+
+        // Act
+        await using var temporaryStream = await service.CopyToTemporaryStreamAsync(
+            sourceStream,
+            [hashPlugin],
+            cancellationToken: cancellationToken
+        );
+
+
+        // Assert
+        var hashArray = hashPlugin.GetHashArray(nameof(SHA256));
+        var expectedHash = SHA256.HashData(sourceData);
+        hashArray.Should().Equal(expectedHash);
     }
 
     private static (TemporaryStreamService service, byte[] sourceData, MemoryStream sourceStream) CreateTestSetup(
@@ -310,21 +374,6 @@ public static class CopyToTemporaryStreamTests
         var copiedData = new byte[expectedData.Length];
         await temporaryStream.ReadExactlyAsync(copiedData, cancellationToken);
         copiedData.Should().Equal(expectedData);
-    }
-
-    private static (HashingPlugin plugin, string expectedHash) CreateHashingPluginWithExpectedHash(
-        byte[] sourceData,
-        CopyToHashCalculator hashCalculator
-    )
-    {
-        var plugin = new HashingPlugin([hashCalculator]);
-
-        var expectedHash = HashConverter.ConvertHashToString(
-            hashCalculator.HashAlgorithm.ComputeHash(sourceData),
-            hashCalculator.ConversionMethod
-        );
-
-        return (plugin, expectedHash);
     }
 
     private static TemporaryStreamService CreateDefaultService() =>
