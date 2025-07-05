@@ -74,18 +74,18 @@ public sealed class HashingPlugin : ICopyToTemporaryStreamPlugin
     /// <param name="innerStream">The inner stream to be wrapped by the hash calculators.</param>
     /// <param name="cancellationToken">The optional token to cancel the asynchronous operation.</param>
     /// <returns>The outermost CryptoStream.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="innerStream" /> is null.</exception>
     public ValueTask<Stream> SetUpAsync(Stream innerStream, CancellationToken cancellationToken = default)
     {
         innerStream.MustNotBeNull();
-        CryptoStream outermostStream = null!; // In the constructor, we ensure that the immutable array is not empty
+        Stream currentStream = innerStream;
         for (var i = 0; i < HashCalculators.Length; i++)
         {
-            outermostStream =
-                HashCalculators[i].CreateWrappingCryptoStream(innerStream, leaveWrappedStreamOpen: true);
+            currentStream = HashCalculators[i].CreateWrappingCryptoStream(currentStream, leaveWrappedStreamOpen: true);
         }
 
-        _outermostCryptoStream = outermostStream;
-        return new ValueTask<Stream>(outermostStream);
+        _outermostCryptoStream = (CryptoStream)currentStream;
+        return new ValueTask<Stream>(currentStream);
     }
 
     /// <summary>
