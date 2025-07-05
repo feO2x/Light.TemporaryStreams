@@ -38,7 +38,7 @@ public static class TemporaryStreamServiceExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="temporaryStreamService" /> or <paramref name="source" /> are null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="copyBufferSize" /> has a value that is less than 0.</exception>
     public static async Task<TemporaryStream> CopyToTemporaryStreamAsync(
-        this TemporaryStreamService temporaryStreamService,
+        this ITemporaryStreamService temporaryStreamService,
         Stream source,
         string? filePath = null,
         TemporaryStreamServiceOptions? options = null,
@@ -100,7 +100,7 @@ public static class TemporaryStreamServiceExtensions
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="copyBufferSize" /> has a value that is less than 0.</exception>
     /// <exception cref="EmptyCollectionException">Thrown when <paramref name="plugins" /> is empty or the default instance.</exception>
     public static async Task<TemporaryStream> CopyToTemporaryStreamAsync(
-        this TemporaryStreamService temporaryStreamService,
+        this ITemporaryStreamService temporaryStreamService,
         Stream source,
         ImmutableArray<ICopyToTemporaryStreamPlugin> plugins,
         string? filePath = null,
