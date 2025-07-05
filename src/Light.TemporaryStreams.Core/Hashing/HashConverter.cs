@@ -25,7 +25,7 @@ public static class HashConverter
             HashConversionMethod.None => "",
             _ => throw new ArgumentOutOfRangeException(
                 nameof(conversionMethod),
-                $"{nameof(conversionMethod)} has an invalid value"
+                $"{nameof(conversionMethod)} has an invalid value '{conversionMethod}'"
             )
         };
 }
