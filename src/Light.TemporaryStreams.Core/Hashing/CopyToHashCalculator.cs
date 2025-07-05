@@ -58,7 +58,7 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
             if (hash is null)
             {
                 throw new InvalidOperationException(
-                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(Hash)} property."
+                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(Hash)} property"
                 );
             }
 
@@ -80,7 +80,7 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
             if (hashArray is null)
             {
                 throw new InvalidOperationException(
-                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(HashArray)} property."
+                    $"ObtainHashFromAlgorithm must be called before accessing the {nameof(HashArray)} property"
                 );
             }
 
@@ -158,7 +158,7 @@ public sealed class CopyToHashCalculator : IAsyncDisposable
                .Hash
                .MustNotBeNull(
                     () => new InvalidOperationException(
-                        "The crypto stream was not written to - no hash was calculated."
+                        "The crypto stream was not written to - no hash was calculated"
                     )
                 );
 
