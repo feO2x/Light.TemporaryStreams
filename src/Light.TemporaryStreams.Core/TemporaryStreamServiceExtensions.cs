@@ -123,7 +123,7 @@ public static class TemporaryStreamServiceExtensions
         {
             for (var i = 0; i < plugins.Length; i++)
             {
-                outermostStream = await plugins[i].SetUpAsync(source, cancellationToken).ConfigureAwait(false);
+                outermostStream = await plugins[i].SetUpAsync(outermostStream, cancellationToken).ConfigureAwait(false);
             }
 
             if (copyBufferSize.HasValue)
