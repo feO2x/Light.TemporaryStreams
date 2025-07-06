@@ -7,9 +7,12 @@
   <ItemGroup>
     <PackageVersion Include="FluentAssertions" Version="[7.2.0]" />
     <PackageVersion Include="Light.GuardClauses" Version="13.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="8.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Neovolve.Logging.Xunit.v3" Version="7.1.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.1" />
     <PackageVersion Include="xunit.v3" Version="2.0.3" />
   </ItemGroup>
