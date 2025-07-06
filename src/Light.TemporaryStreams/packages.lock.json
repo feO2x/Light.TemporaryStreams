@@ -1,0 +1,31 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net8.0": {
+      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+        "type": "Direct",
+        "requested": "[8.0.0, )",
+        "resolved": "8.0.0",
+        "contentHash": "cjWrLkJXK0rs4zofsK4bSdg+jhDLTaxrkXu4gS6Y7MAlCvRyNNgwY/lJi5RDlQOnSZweHqoyvgvbdvQsRIW+hg=="
+      },
+      "Microsoft.NET.ILLink.Tasks": {
+        "type": "Direct",
+        "requested": "[8.0.17, )",
+        "resolved": "8.0.17",
+        "contentHash": "x5/y4l8AtshpBOrCZdlE4txw8K3e3s9meBFeZeR3l8hbbku2V7kK6ojhXvrbjg1rk3G+JqL1BI26gtgc1ZrdUw=="
+      },
+      "light.temporarystreams.core": {
+        "type": "Project",
+        "dependencies": {
+          "Light.GuardClauses": "[13.0.0, )"
+        }
+      },
+      "Light.GuardClauses": {
+        "type": "CentralTransitive",
+        "requested": "[13.0.0, )",
+        "resolved": "13.0.0",
+        "contentHash": "mhlWUk0o+XibJgYuPlO9vQQpMmh4EAeDRFAac7pP6W3zmpjEeyUVGOiw+mdCxX469QQ2rkMYjWyHoDlZv599/w=="
+      }
+    }
+  }
+}
