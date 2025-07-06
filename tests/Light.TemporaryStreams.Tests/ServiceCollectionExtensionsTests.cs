@@ -34,7 +34,7 @@ public sealed class ServiceCollectionExtensionsTests
     }
 
     [Fact]
-    public async Task AddTemporaryStreamService_ShouldNotIncorporateMicrosoftLogging_When()
+    public async Task AddTemporaryStreamService_ShouldNotIncorporateMicrosoftLogging_WhenCorrespondingArgumentIsFalse()
     {
         await using var serviceProvider = new ServiceCollection()
            .AddTemporaryStreamService(integrateIntoMicrosoftExtensionsLogging: false)
