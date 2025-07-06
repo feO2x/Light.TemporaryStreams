@@ -35,7 +35,7 @@ public static class CopyToHashCalculatorTests
     [Fact]
     public static async Task ObtainHashFromAlgorithm_ShouldThrow_WhenNothingWasWrittenToUnderlyingCryptoStream()
     {
-        await using CopyToHashCalculator calculator = SHA3_512.Create();
+        await using CopyToHashCalculator calculator = SHA1.Create();
 
         // ReSharper disable once AccessToDisposedClosure -- delegate called before calculator is disposed of
         var act = () => calculator.ObtainHashFromAlgorithm();
