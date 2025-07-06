@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <ParentPropsFile>$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))</ParentPropsFile>
+  </PropertyGroup>
+
+  <Import Project="$(ParentPropsFile)" />
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+    <RootNamespace>Light.TemporaryStreams</RootNamespace>
+  </PropertyGroup>
+</Project>

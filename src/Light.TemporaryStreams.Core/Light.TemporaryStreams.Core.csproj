@@ -1,11 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <IsAotCompatible>true</IsAotCompatible>
-    <RootNamespace>Light.TemporaryStreams</RootNamespace>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Light.GuardClauses" />
   </ItemGroup>
