@@ -9,7 +9,6 @@ public sealed class TemporaryStreamErrorHandlerProvider
 {
     private readonly Action<TemporaryStream, Exception>? _errorHandler;
 
-
     /// <summary>
     /// Initializes a new instance of <see cref="TemporaryStreamErrorHandlerProvider" />.
     /// </summary>
