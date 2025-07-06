@@ -78,7 +78,8 @@ public sealed class HashingPlugin : ICopyToTemporaryStreamPlugin
     public ValueTask<Stream> SetUpAsync(Stream innerStream, CancellationToken cancellationToken = default)
     {
         innerStream.MustNotBeNull();
-        Stream currentStream = innerStream;
+        cancellationToken.ThrowIfCancellationRequested();
+        var currentStream = innerStream;
         for (var i = 0; i < HashCalculators.Length; i++)
         {
             currentStream = HashCalculators[i].CreateWrappingCryptoStream(currentStream, leaveWrappedStreamOpen: true);
