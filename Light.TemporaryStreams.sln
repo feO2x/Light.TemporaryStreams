@@ -30,6 +30,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{048D0C61-6CF
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DA93B299-75F5-4A49-B2A6-4A1247047E5E}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Directory.Build.props = tests\Directory.Build.props
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Light.TemporaryStreams", "src\Light.TemporaryStreams\Light.TemporaryStreams.csproj", "{61725DD8-D81C-4EC0-A0A1-63D96A87DAC1}"
 EndProject
