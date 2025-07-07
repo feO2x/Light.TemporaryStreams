@@ -1,5 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- See src/Directory.Build.props for additional properties -->
+
+  <PropertyGroup>
+    <Description>The core libary of Light.TemporaryStreams, containing that base implementation without Microsoft.Extensions.Logging and Microsoft.Extensions.DependencyInjection integration. Provides temporary streams, similar to how IFormFile works in ASP.NET Core.</Description>
+    <PackageReleaseNotes>
+      Light.TemporaryStreams.Core 1.0.0
+      ---------------------------------
+
+      - Initial release 🚀
+      - use ITemporaryStreamService and the CopyToTemporaryStreamAsync extension method to create temporary seekable streams easily
+      - use the HashingPlugin to calculate hashes during the copy operation, or write your own plugins via ICopyToTemporaryStreamPlugin
+      - check out TemporaryStreamServiceOptions to configure the service
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Light.GuardClauses" />
   </ItemGroup>
