@@ -63,6 +63,8 @@ public static class TemporaryStreamServiceExtensions
             {
                 await source.CopyToAsync(temporaryStream, cancellationToken).ConfigureAwait(false);
             }
+
+            temporaryStream.ResetStreamPosition();
         }
         catch
         {
@@ -141,6 +143,8 @@ public static class TemporaryStreamServiceExtensions
             {
                 await plugins[i].AfterCopyAsync(cancellationToken).ConfigureAwait(false);
             }
+
+            temporaryStream.ResetStreamPosition();
         }
         catch
         {
