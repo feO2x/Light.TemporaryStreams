@@ -3,7 +3,7 @@
   <!-- See src/Directory.Build.props for additional properties -->
 
   <PropertyGroup>
-    <Description>The core libary of Light.TemporaryStreams, containing that base implementation without Microsoft.Extensions.Logging and Microsoft.Extensions.DependencyInjection integration. Provides temporary streams, similar to how IFormFile works in ASP.NET Core.</Description>
+    <Description>The core library of Light.TemporaryStreams, containing that base implementation without Microsoft.Extensions.Logging and Microsoft.Extensions.DependencyInjection integration. Provides temporary streams, similar to how IFormFile works in ASP.NET Core.</Description>
     <PackageReleaseNotes>
       Light.TemporaryStreams.Core 1.0.0
       ---------------------------------
