@@ -456,11 +456,10 @@ public static class CopyToTemporaryStreamTests
         CancellationToken cancellationToken
     )
     {
-        temporaryStream.Should().NotBeNull();
+        temporaryStream.Position.Should().Be(0);
         temporaryStream.IsFileBased.Should().Be(expectFileBased);
         temporaryStream.Length.Should().Be(expectedData.Length);
 
-        temporaryStream.Position = 0;
         var copiedData = new byte[expectedData.Length];
         await temporaryStream.ReadExactlyAsync(copiedData, cancellationToken);
         copiedData.Should().Equal(expectedData);
