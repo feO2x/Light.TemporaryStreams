@@ -16,9 +16,9 @@
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PackageTags>streaming;memory-management;form-file</PackageTags>
+    <PackageIcon>light-logo.png</PackageIcon>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageLicenseUrl>https://github.com/feO2x/Light.TemporaryStreams/blob/main/LICENSE</PackageLicenseUrl>
   </PropertyGroup>
 
   <ItemGroup>
