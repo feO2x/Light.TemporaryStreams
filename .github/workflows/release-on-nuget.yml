@@ -23,7 +23,8 @@ jobs:
           SNK: ${{ secrets.SNK }}
         run: echo "$SNK" > base64 --decode > Light.TemporaryStreams.snk
       - name: Create NuGet packages
-        run: dotnet pack ./Light.TemporaryStreams.sln --configuration Release /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=./Light.TemporaryStreams.snk /p:ContinuousIntegrationBuild=true
+        # AssemblyOriginatorKeyFile must be a relative path from the csproj file that is being built, hence the ../../
+        run: dotnet pack ./Light.TemporaryStreams.sln --configuration Release /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=../../Light.TemporaryStreams.snk /p:ContinuousIntegrationBuild=true
       - name: Delete SNK file
         run: rm ./Light.TemporaryStreams.snk
       - name: Push NuGet packages
