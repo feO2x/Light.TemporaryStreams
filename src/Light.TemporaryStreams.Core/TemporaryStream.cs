@@ -327,4 +327,9 @@ public class TemporaryStream : Stream
 
     /// <inheritdoc />
     public override void WriteByte(byte value) => UnderlyingStream.WriteByte(value);
+
+    /// <summary>
+    /// Resets the position of the stream to the beginning.
+    /// </summary>
+    public void ResetStreamPosition() => Position = 0;
 }

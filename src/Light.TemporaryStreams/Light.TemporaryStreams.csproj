@@ -1,5 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- See src/Directory.Build.props for additional properties -->
+
+  <PropertyGroup>
+    <Description>Provides temporary streams, similar to how IFormFile works in ASP.NET Core. With full integration with Microsoft.Extensions.Logging and Microsoft.Extensions.DependencyInjection.</Description>
+    <PackageReleaseNotes>
+      Light.TemporaryStreams 1.0.0
+      ---------------------------------
+
+      - Initial release 🚀
+      - use the services.AddTemporaryStreamService extension method to integrate ITemporaryStreamService into Microsoft.Extensions.DependencyInjection
+      - use ITemporaryStreamService and the CopyToTemporaryStreamAsync extension method to create temporary seekable streams easily
+      - use the HashingPlugin to calculate hashes during the copy operation, or write your own plugins via ICopyToTemporaryStreamPlugin
+      - check out TemporaryStreamServiceOptions to configure the service
+    </PackageReleaseNotes>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
