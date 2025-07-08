@@ -60,14 +60,11 @@ public class SomeService
         _s3UploadClient = s3UploadClient;
     }
 
-    public async Task<TempooraryStream> ProcessStreamAsync(
-        Stream nonSeekableStream,
-        CancellationToken cancellationToken = default
-    )
+    public async Task ProcessStreamAsync(Stream nonSeekableStream, CancellationToken cancellationToken = default)
     {
         // A temporary stream is either backed by a memory stream or a file stream
         // and thus seekable.
-        await using var temporaryStream =
+        await using TemporaryStream temporaryStream =
             await _temporaryStreamService.CopyToTemporaryStreamAsync(nonSeekableStream, cancellationToken);
 
         // Do something here with the temporary stream (analysis, processing, etc.)
