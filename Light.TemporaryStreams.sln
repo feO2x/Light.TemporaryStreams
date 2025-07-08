@@ -22,6 +22,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{05D48EEC-A2AB-4143-9533-A633E7B25EA3}"
 	ProjectSection(SolutionItems) = preProject
 		.github\workflows\build-and-test.yml = .github\workflows\build-and-test.yml
+		.github\workflows\release-on-nuget.yml = .github\workflows\release-on-nuget.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{048D0C61-6CF0-43E6-B7DB-1FDD8F791D57}"
@@ -37,6 +38,13 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Light.TemporaryStreams", "src\Light.TemporaryStreams\Light.TemporaryStreams.csproj", "{61725DD8-D81C-4EC0-A0A1-63D96A87DAC1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Light.TemporaryStreams.Tests", "tests\Light.TemporaryStreams.Tests\Light.TemporaryStreams.Tests.csproj", "{93CCDAD2-A16A-4BA3-A805-4FC7C4B518C8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "actions", "actions", "{68BCD857-ACA2-4D68-A0D5-1B0E92FD444B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cache-nuget", "cache-nuget", "{1D23A697-FFF5-4FA2-B540-5F8CBBF6863C}"
+	ProjectSection(SolutionItems) = preProject
+		.github\actions\cache-nuget\action.yml = .github\actions\cache-nuget\action.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,5 +114,7 @@ Global
 		{4D6B4F48-1E4B-4ACA-9F32-829442DB5E56} = {DA93B299-75F5-4A49-B2A6-4A1247047E5E}
 		{61725DD8-D81C-4EC0-A0A1-63D96A87DAC1} = {048D0C61-6CF0-43E6-B7DB-1FDD8F791D57}
 		{93CCDAD2-A16A-4BA3-A805-4FC7C4B518C8} = {DA93B299-75F5-4A49-B2A6-4A1247047E5E}
+		{68BCD857-ACA2-4D68-A0D5-1B0E92FD444B} = {677E4EE1-7062-46AB-81FF-8D20E9316ED6}
+		{1D23A697-FFF5-4FA2-B540-5F8CBBF6863C} = {68BCD857-ACA2-4D68-A0D5-1B0E92FD444B}
 	EndGlobalSection
 EndGlobal
