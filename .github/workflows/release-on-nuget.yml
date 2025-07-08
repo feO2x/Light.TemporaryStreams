@@ -21,7 +21,7 @@ jobs:
       - name: Prepare SNK file
         env:
           SNK: ${{ secrets.SNK }}
-        run: echo "$SNK" > base64 --decode > Light.TemporaryStreams.snk
+        run: echo "$SNK" | base64 --decode > Light.TemporaryStreams.snk
       - name: Create NuGet packages
         # AssemblyOriginatorKeyFile must be a relative path from the csproj file that is being built, hence the ../../
         run: dotnet pack ./Light.TemporaryStreams.sln --configuration Release /p:SignAssembly=true /p:AssemblyOriginatorKeyFile=../../Light.TemporaryStreams.snk /p:ContinuousIntegrationBuild=true
