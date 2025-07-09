@@ -6,18 +6,13 @@
 
 ## Overview 🔍
 
-Light.TemporaryStreams is a lightweight .NET library that helps you convert non-seekable streams into seekable temporary
-streams. A temporary stream is either backed by a memory stream (for input smaller than 80 KB) or a file stream to a
-temporary file. This is particularly useful for backend services that receive streams from HTTP requests (e.g.,
-`application/octet-stream`, custom-parsed `multipart/form-data`) or download files from storage systems for further
-processing.
+Light.TemporaryStreams is a lightweight .NET library that helps you convert non-seekable streams into seekable temporary streams. A temporary stream is either backed by a memory stream (for input smaller than 80 KB) or a file stream. This is particularly useful for backend services that receive streams from HTTP requests or download files from storage systems for further processing.
 
 ## Key Features ✨
 
 - 🚀 Easy conversion of non-seekable streams to seekable temporary streams
 - 💾 Automatic management of temporary files (creation and deletion)
-- 🔄 Smart switching between memory-based and file-based streams based on size (similar behavior to ASP.NET Core's
-  `IFormFile`)
+- 🔄 Smart switching between memory-based and file-based streams depending on size (similar behavior to ASP.NET Core's `IFormFile`)
 - 🧩 Plugin system for extending functionality (e.g., calculating hashes during stream copying)
 - 🔌 Integration with Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Logging
 
@@ -79,7 +74,7 @@ public class SomeService
         // You can also use resilience patterns here and always reset the stream
         // for each upload attempt.
         temporaryStream.ResetStreamPosition();
-        await _s3UploadClient.UploadAsync(temporaryStream);
+        await _s3UploadClient.UploadAsync(temporaryStream, cancellationToken);
 
         // When the temporary stream is disposed, it will automatically delete the
         // underlying file if necessary. No need to worry about manual cleanup.
@@ -156,7 +151,7 @@ byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 
 ### Hexadecimal Hashes via CopyToHashCalculator
 
-The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted into instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
+The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted to instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
 
 ```csharp
 var sha1Calculator = new CopyToHashCalculator(SHA1.Create(), HashConversionMethod.UpperHexadecimal, "SHA1");
