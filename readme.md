@@ -169,7 +169,7 @@ byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 
 - Your service implements endpoints that receive `application/octet-stream` requests and you need to process the incoming stream in a seekable way.
 - Your service implements endpoints that receive `multipart/form-data` requests and you cannot use `IFormFile`, for example because the request has both JSON and binary data. See [this blog post by Andrew Lock](https://andrewlock.net/reading-json-and-binary-data-from-multipart-form-data-sections-in-aspnetcore/) for an example.
-- Your service downloads files from storage systems like Amazon S3 or Azure Storage Accounts and processeses them further.
+- Your service downloads files from storage systems like Amazon S3 or Azure Storage Accounts and processes them further.
 - Your endpoint wants to return a stream to the caller and the file should be gone after the request finishes.
 
 ## Light.TemporaryStreams.Core vs. Light.TemporaryStreams 🧰
