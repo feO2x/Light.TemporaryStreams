@@ -40,32 +40,38 @@ Then, inject the `ITemporaryStreamService` into any class that needs to convert 
 temporary streams:
 
 ```csharp
-using Light.TemporaryStreams;
-using System.IO;
-using System.Threading.Tasks;
-
 public class SomeService
 {
     private readonly ITemporaryStreamService _temporaryStreamService;
     private readonly IS3UploadClient _s3UploadClient;
 
-    public SomeService(ITemporaryStreamService temporaryStreamService, IS3UploadClient s3UploadClient)
+    public SomeService(
+        ITemporaryStreamService temporaryStreamService,
+        IS3UploadClient s3UploadClient
+    )
     {
         _temporaryStreamService = temporaryStreamService;
         _s3UploadClient = s3UploadClient;
     }
 
-    public async Task ProcessStreamAsync(Stream nonSeekableStream, CancellationToken cancellationToken = default)
+    public async Task ProcessStreamAsync(
+        Stream nonSeekableStream,
+        CancellationToken cancellationToken = default
+    )
     {
         // A temporary stream is either backed by a memory stream or a file stream and thus seekable.
         await using TemporaryStream temporaryStream =
-            await _temporaryStreamService.CopyToTemporaryStreamAsync(nonSeekableStream, cancellationToken);
+            await _temporaryStreamService.CopyToTemporaryStreamAsync(
+                nonSeekableStream,
+                cancellationToken: cancellationToken
+            );
 
         // Do something here with the temporary stream (analysis, processing, etc.).
         // For example, your code base might have a PdfProcessor that requires a seekable stream.
         using (var pdf = new PdfProcessor(temporaryStream, leaveOpen: true))
         {
-            var emptyOrIrrelevantPages = await pdf.DetermineEmptyOrIrrelevantPagesAsync(cancellationToken);
+            var emptyOrIrrelevantPages =
+                await pdf.DetermineEmptyOrIrrelevantPagesAsync(cancellationToken);
             pdf.RemovePages(emptyOrIrrelevantPages);
         }
 
@@ -136,10 +142,15 @@ by implementing the `ICopyToTemporaryStreamPlugin` interface.
 
 ```csharp
 // You can simply pass any instance of System.Security.Cryptography.HashAlgorithm
-// to the hashing plugin constructor. They will be disposed of when the hashingPlugin is disposed of.
+// to the hashing plugin constructor. They will be disposed of when the
+// hashingPlugin is disposed of.
 await using var hashingPlugin = new HashingPlugin([SHA1.Create(), MD5.Create()]);
-await using var temporaryStream = await _temporaryStreamService
-    .CopyToTemporaryStreamAsync(stream, [hashingPlugin], cancellationToken: cancellationToken);
+await using var temporaryStream =
+    await _temporaryStreamService.CopyToTemporaryStreamAsync(
+        stream,
+        [hashingPlugin],
+        cancellationToken: cancellationToken
+    );
 
 // After copying is done, you can call GetHash to obtain the hash as a base64 string
 // or GetHashArray to obtain the hash in its raw byte array form.
@@ -149,20 +160,34 @@ string sha1Base64Hash = hashingPlugin.GetHash(nameof(SHA1));
 byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 ```
 
-### Hexadecimal Hashes via CopyToHashCalculator
+### More Control via CopyToHashCalculator
 
 The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted to instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
 
 ```csharp
-var sha1Calculator = new CopyToHashCalculator(SHA1.Create(), HashConversionMethod.UpperHexadecimal, "SHA1");
-var md5Calculator = new CopyToHashCalculator(MD5.Create(), HashConversionMethod.None, "MD5");
+// You can explicitly create instances of CopyToHashCalculator to have more control over the
+// conversion method and the name that identifies the hash calculator within the HashingPlugin.
+var sha1Calculator = new CopyToHashCalculator(
+    SHA1.Create(),
+    HashConversionMethod.UpperHexadecimal,
+    "SHA1"
+);
+var md5Calculator = new CopyToHashCalculator(
+    MD5.Create(),
+    HashConversionMethod.None,
+    "MD5"
+);
 await using var hashingPlugin = new HashingPlugin([sha1Calculator, md5Calculator]);
 
-await using var temporaryStream = await _temporaryStreamService
-    .CopyToTemporaryStreamAsync(stream, [hashingPlugin], cancellationToken: cancellationToken);
+await using var temporaryStream =
+    await _temporaryStreamService.CopyToTemporaryStreamAsync(
+        stream,
+        [hashingPlugin],
+        cancellationToken: cancellationToken
+    );
 
-string sha1HexadecimalHash = hashingPlugin.GetHash(nameof(SHA1));
-byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
+string sha1HexadecimalHash = hashingPlugin.GetHash("SHA1");
+byte[] md5HashArray = hashingPlugin.GetHashArray("MD5");
 ```
 
 ## When To Use Light.TemporaryStreams 🤔
