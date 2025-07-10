@@ -59,7 +59,8 @@ public class SomeService
         CancellationToken cancellationToken = default
     )
     {
-        // A temporary stream is either backed by a memory stream or a file stream and thus seekable.
+        // A temporary stream is either backed by a memory stream or a file stream and
+        // thus seekable.
         await using TemporaryStream temporaryStream =
             await _temporaryStreamService.CopyToTemporaryStreamAsync(
                 nonSeekableStream,
@@ -67,7 +68,8 @@ public class SomeService
             );
 
         // Do something here with the temporary stream (analysis, processing, etc.).
-        // For example, your code base might have a PdfProcessor that requires a seekable stream.
+        // For example, your code base might have a PdfProcessor that requires
+        // a seekable stream.
         using (var pdf = new PdfProcessor(temporaryStream, leaveOpen: true))
         {
             var emptyOrIrrelevantPages =
@@ -165,8 +167,9 @@ byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted to instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
 
 ```csharp
-// You can explicitly create instances of CopyToHashCalculator to have more control over the
-// conversion method and the name that identifies the hash calculator within the HashingPlugin.
+// You can explicitly create instances of CopyToHashCalculator to have
+// more control over the conversion method and the name that identifies
+// the hash calculator within the HashingPlugin.
 var sha1Calculator = new CopyToHashCalculator(
     SHA1.Create(),
     HashConversionMethod.UpperHexadecimal,
