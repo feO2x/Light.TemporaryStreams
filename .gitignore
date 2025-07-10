@@ -6,3 +6,4 @@ obj/
 *.suo
 *.user
 Light.TemporaryStreams.snk
+.DS_Store

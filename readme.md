@@ -6,18 +6,13 @@
 
 ## Overview 🔍
 
-Light.TemporaryStreams is a lightweight .NET library that helps you convert non-seekable streams into seekable temporary
-streams. A temporary stream is either backed by a memory stream (for input smaller than 80 KB) or a file stream to a
-temporary file. This is particularly useful for backend services that receive streams from HTTP requests (e.g.,
-`application/octet-stream`, custom-parsed `multipart/form-data`) or download files from storage systems for further
-processing.
+Light.TemporaryStreams is a lightweight .NET library that helps you convert non-seekable streams to seekable temporary streams. A temporary stream is either backed by a memory stream (for input smaller than 80 KB) or a file stream. This is particularly useful for backend services that receive streams from HTTP requests or download files from storage systems for further processing.
 
 ## Key Features ✨
 
 - 🚀 Easy conversion of non-seekable streams to seekable temporary streams
 - 💾 Automatic management of temporary files (creation and deletion)
-- 🔄 Smart switching between memory-based and file-based streams based on size (similar behavior to ASP.NET Core's
-  `IFormFile`)
+- 🔄 Smart switching between memory-based and file-based streams depending on size (similar behavior to ASP.NET Core's `IFormFile`)
 - 🧩 Plugin system for extending functionality (e.g., calculating hashes during stream copying)
 - 🔌 Integration with Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Logging
 
@@ -62,16 +57,15 @@ public class SomeService
 
     public async Task ProcessStreamAsync(Stream nonSeekableStream, CancellationToken cancellationToken = default)
     {
-        // A temporary stream is either backed by a memory stream or a file stream
-        // and thus seekable.
+        // A temporary stream is either backed by a memory stream or a file stream and thus seekable.
         await using TemporaryStream temporaryStream =
             await _temporaryStreamService.CopyToTemporaryStreamAsync(nonSeekableStream, cancellationToken);
 
         // Do something here with the temporary stream (analysis, processing, etc.).
-        // For example, your code base has a PdfProcessor that requires a seekable stream.
+        // For example, your code base might have a PdfProcessor that requires a seekable stream.
         using (var pdf = new PdfProcessor(temporaryStream, leaveOpen: true))
         {
-            var emptyOrIrrelevantPages = pdf.DetermineEmptyOrIrrelevantPages();
+            var emptyOrIrrelevantPages = await pdf.DetermineEmptyOrIrrelevantPagesAsync(cancellationToken);
             pdf.RemovePages(emptyOrIrrelevantPages);
         }
 
@@ -79,12 +73,13 @@ public class SomeService
         // You can also use resilience patterns here and always reset the stream
         // for each upload attempt.
         temporaryStream.ResetStreamPosition();
-        await _s3UploadClient.UploadAsync(temporaryStream);
+        await _s3UploadClient.UploadAsync(temporaryStream, cancellationToken);
 
-        // When the temporary stream is disposed, it will automatically delete the
+        // When the temporary stream is disposed of (because of the await using at
+        // the beginning of the method), it will automatically delete the
         // underlying file if necessary. No need to worry about manual cleanup.
-        // This is also great when a temporary stream is returned in an
-        // MVC Controller action or in Minimal API endpoint.
+        // This also works when a temporary stream is returned in an
+        // MVC Controller action or in a Minimal API endpoint.
     }
 }
 ```
@@ -156,7 +151,7 @@ byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 
 ### Hexadecimal Hashes via CopyToHashCalculator
 
-The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted into instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
+The `HashAlgorithm` instances passed to the `HashingPlugin` constructor in the previous example are actually converted to instances of `CopyToHashCalculator` via an implicit conversion operator. You can instantiate this class yourself to have more control over the conversion method that converts a hash byte array into a string as well as the name used to identify the hash calculator.
 
 ```csharp
 var sha1Calculator = new CopyToHashCalculator(SHA1.Create(), HashConversionMethod.UpperHexadecimal, "SHA1");
@@ -172,9 +167,10 @@ byte[] md5HashArray = hashingPlugin.GetHashArray(nameof(MD5));
 
 ## When To Use Light.TemporaryStreams 🤔
 
-- Your service implements endpoints that receives `application/octet-stream` that you need to process further.
-- Your service implements endpoints that receives `multipart/form-data` and you cannot use `IFormFile`, for example because the request has both JSON and binary data. See [this blog post by Andrew Lock](https://andrewlock.net/reading-json-and-binary-data-from-multipart-form-data-sections-in-aspnetcore/) for an example.
-- Your service downloads files from storage systems like S3 and processes them further.
+- Your service implements endpoints that receive `application/octet-stream` requests and you need to process the incoming stream in a seekable way.
+- Your service implements endpoints that receive `multipart/form-data` requests and you cannot use `IFormFile`, for example because the request has both JSON and binary data. See [this blog post by Andrew Lock](https://andrewlock.net/reading-json-and-binary-data-from-multipart-form-data-sections-in-aspnetcore/) for an example.
+- Your service downloads files from storage systems like Amazon S3 or Azure Storage Accounts and processes them further.
+- Your endpoint wants to return a stream to the caller and the file should be gone after the request finishes.
 
 ## Light.TemporaryStreams.Core vs. Light.TemporaryStreams 🧰
 
@@ -198,11 +194,11 @@ This package builds on Core and adds integration with:
 
 Use Light.TemporaryStreams.Core if you're working in a non-DI environment or have your own DI container.
 Use Light.TemporaryStreams if you're working in an ASP.NET Core application or any other application supporting
-Microsoft.Extensions.DependencyInjection.
+Microsoft.Extensions.DependencyInjection and Microsoft.Extensions.Logging.
 
 ## Contributing 🤝
 
-Contributions are welcome! First, create an issue to discuss your idea. After that, you can submit pull requests.
+Contributions are welcome! First, create an issue to discuss your idea. After that, you can submit a pull request.
 
 ## License 📜
 
